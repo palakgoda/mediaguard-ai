@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "HealthCheck": {
+      "title": "Health Check",
+      "description": "Records status of system health checks",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/health-checks/{checkId}": {
+      "schema": "HealthCheck",
+      "description": "Collection for system health status"
+    }
+  }
+}

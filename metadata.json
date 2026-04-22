@@ -1,0 +1,6 @@
+{
+  "name": "MediaShield AI",
+  "description": "A full-stack application for media protection and health diagnostics using Gemini AI and Firestore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
