@@ -1,7 +1,7 @@
 {
   "projectId": "mediashield-ai-494009",
   "appId": "1:190287868616:web:44cbc68709743e567debfd",
-  "apiKey": "AIzaSyCp8HWI0tyTUaS6KzYdoT9nQwbnCQVjblg",
+  "apiKey": "import.meta.env.VITE_FIREBASE_API_KEY",
   "authDomain": "mediashield-ai-494009.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-f78a4ca6-d69c-4c47-8c55-be118d9fa815",
   "storageBucket": "mediashield-ai-494009.firebasestorage.app",
