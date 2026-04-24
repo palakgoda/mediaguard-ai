@@ -6,19 +6,23 @@ export class WatcherAgent extends BaseAgent {
   }
 
   public async processRequest(taskId: string, context?: any) {
-    await this.logStatus("processing", "Metadata Scan initiated");
-    
+    // UPDATED: Added taskId to link the log to the task
+    await this.logStatus("init", `${this.name} Agent Initialized`, taskId);
+    await this.logStatus("processing", "Metadata Scan initiated", taskId);
+
     try {
-      // Mock logic for scanning metadata
       const mockResponse = { status: "success", foundSuspiciousMetadata: true };
-      await this.logStatus("complete", "Metadata scan complete");
-      
+
+      // UPDATED: Added taskId
+      await this.logStatus("complete", "Metadata scan complete", taskId);
+
       // Chain reaction: Trigger Investigator next
       await this.triggerNextAgent(taskId, "Pending_Investigator");
-      
+
       return mockResponse;
     } catch (error) {
-      await this.logStatus("error", `Scan failed: ${error instanceof Error ? error.message : String(error)}`);
+      // UPDATED: Added taskId
+      await this.logStatus("error", `Scan failed: ${error instanceof Error ? error.message : String(error)}`, taskId);
       throw error;
     }
   }

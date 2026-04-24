@@ -27,37 +27,27 @@ export function startLogListener() {
       snapshot.docChanges().forEach(async (change) => {
         if (change.type === "added" || change.type === "modified") {
           const data = change.doc.data();
-          const { status, taskId, message } = data;
 
-          // DEBUG: This helps you see exactly what Firestore is receiving in your terminal
-          console.log(`[Incoming Log] Status: ${status} | Message: ${message}`);
+          // Ensure we capture the taskId from the log document
+          const taskId = data.taskId;
+          const message = data.message || "";
 
-          // We check the 'message' field because that's where the "Pending_..." command is located
+          // If there's no taskId, we skip to avoid the "invalid resource path" error
+          if (!taskId) return;
 
-          // 1. Trigger Watcher
           if (message.includes("Pending_Watcher")) {
-            console.log(`[Chain] Signal detected. Waking up Watcher for ${taskId}`);
             const agent = new WatcherAgent();
             agent.processRequest(taskId, message).catch(e => console.error(e));
           }
-
-          // 2. Trigger Investigator
           else if (message.includes("Pending_Investigator")) {
-            console.log(`[Chain] Signal detected. Waking up Investigator for ${taskId}`);
             const agent = new InvestigatorAgent();
             agent.processRequest(taskId, message).catch(e => console.error(e));
           }
-
-          // 3. Trigger Judge
           else if (message.includes("Pending_Judge")) {
-            console.log(`[Chain] Signal detected. Waking up Judge for ${taskId}`);
             const agent = new JudgeAgent();
             agent.processRequest(taskId, message).catch(e => console.error(e));
           }
-
-          // 4. Trigger Rectifier
           else if (message.includes("Pending_Rectifier")) {
-            console.log(`[Chain] Signal detected. Waking up Rectifier for ${taskId}`);
             const agent = new RectifierAgent();
             agent.processRequest(taskId, message).catch(e => console.error(e));
           }

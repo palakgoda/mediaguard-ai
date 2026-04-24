@@ -6,18 +6,20 @@ export class RectifierAgent extends BaseAgent {
   }
 
   public async processRequest(taskId: string, context?: any) {
-    await this.logStatus("processing", "Executing final action");
-    
+    await this.logStatus("init", `${this.name} Agent Initialized`, taskId);
+    await this.logStatus("processing", "Executing final action", taskId);
+
     try {
-      // Mock execution of takedown or block logic
-      await this.logStatus("complete", "Final action executed successfully");
-      
+      // UPDATED: Added taskId
+      await this.logStatus("complete", "Final action executed successfully", taskId);
+
       // Chain reaction ends here
       await this.triggerNextAgent(taskId, "Completed");
-      
+
       return { status: "success" };
     } catch (error) {
-      await this.logStatus("error", `Execution failed: ${error instanceof Error ? error.message : String(error)}`);
+      // UPDATED: Added taskId
+      await this.logStatus("error", `Execution failed: ${error instanceof Error ? error.message : String(error)}`, taskId);
       throw error;
     }
   }

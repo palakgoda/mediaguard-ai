@@ -8,24 +8,28 @@ export class ConciergeAgent extends BaseAgent {
   }
 
   public async processRequest(taskId: string, prompt: string) {
-    await this.logStatus("processing", `Handling request: ${prompt.substring(0, 50)}...`);
-    
+    // UPDATED: Added taskId to every logStatus call
+    await this.logStatus("init", `${this.name} Agent Initialized`, taskId);
+    await this.logStatus("processing", `Handling request: ${prompt.substring(0, 50)}...`, taskId);
+
     try {
       console.log(`[${this.name}] Sending request for task ${taskId} to proxy...`);
-      
+
       const mockResponse = {
         status: "success",
         text: "Concierge acknowledges your request and is routing appropriately."
       };
-      
-      await this.logStatus("complete", "Request processed and routed successfully");
-      
+
+      // UPDATED: Added taskId here
+      await this.logStatus("complete", "Request processed and routed successfully", taskId);
+
       // Chain reaction: Trigger Watcher next
       await this.triggerNextAgent(taskId, "Pending_Watcher");
-      
+
       return mockResponse;
     } catch (error) {
-      await this.logStatus("error", `Failed to process request: ${error instanceof Error ? error.message : String(error)}`);
+      // UPDATED: Added taskId here
+      await this.logStatus("error", `Failed to process request: ${error instanceof Error ? error.message : String(error)}`, taskId);
       throw error;
     }
   }
