@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediaGuard AI — Asset Protection Control Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="flex h-screen overflow-hidden">
+  <!-- ═══════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════ -->
+  <aside id="sidebar" class="flex flex-col h-screen overflow-y-auto flex-shrink-0 p-5">
+    <!-- Logo -->
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center"
+        style="background:linear-gradient(135deg,#0050a0,#00dcff22);border:1px solid rgba(0,220,255,.4);box-shadow:0 0 12px rgba(0,220,255,.2)">
+        <i class="fas fa-shield-halved text-sm" style="color:var(--c-cyan)"></i>
+      </div>
+      <div>
+        <p class="raj font-bold text-white text-base leading-none tracking-wide">MEDIAGUARD</p>
+        <p class="mono text-[9px]" style="color:var(--c-cyan)">AI · v3.7.1</p>
+      </div>
+    </div>
+
+    <!-- Status badge -->
+    <div class="mb-6 px-3 py-2 rounded-lg" style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15)">
+      <div class="flex items-center gap-2">
+        <span class="status-dot pulse" style="background:var(--c-green);box-shadow:0 0 6px var(--c-green)"></span>
+        <span class="mono text-[10px]" style="color:var(--c-green)">SYSTEM OPERATIONAL</span>
+      </div>
+      <p class="mono text-[9px] text-slate-500 mt-1">TaskID: <span id="active-task-id"
+          style="color:var(--c-cyan)">TK-0000</span></p>
+    </div>
+
+    <!-- Nav -->
+    <nav class="space-y-1 flex-1">
+      <div class="nav-item active" onclick="switchTab('dashboard',this)"><i class="fas fa-satellite-dish w-4"></i> LIVE
+        PATROL</div>
+      <div class="nav-item" onclick="switchTab('assets',this)"><i class="fas fa-database w-4"></i> ASSET REGISTRY</div>
+      <div class="nav-item" onclick="switchTab('alerts',this)"><i class="fas fa-bell w-4"></i> ALERT FEED <span
+          id="nav-badge" class="ml-auto chip"
+          style="background:rgba(255,45,45,.2);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">3</span></div>
+      <div class="nav-item" onclick="switchTab('map',this)"><i class="fas fa-globe w-4"></i> THREAT MAP</div>
+      <div class="nav-item" onclick="switchTab('report',this)"><i class="fas fa-file-chart-column w-4"></i> INTEL REPORT
+      </div>
+      <div class="nav-item" onclick="switchTab('settings',this)"><i class="fas fa-cog w-4"></i> SETTINGS</div>
+    </nav>
+
+    <!-- System Load -->
+    <div class="mt-6 space-y-3">
+      <div>
+        <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span class="mono">CPU LOAD</span><span
+            id="cpu-val" class="mono" style="color:var(--c-cyan)">42%</span></div>
+        <div class="h-1 rounded-full" style="background:rgba(255,255,255,.06)">
+          <div id="cpu-bar" class="progress-bar" style="width:42%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span class="mono">AGENT MEM</span><span
+            id="mem-val" class="mono text-purple-400">61%</span></div>
+        <div class="h-1 rounded-full" style="background:rgba(255,255,255,.06)">
+          <div class="h-1 rounded-full"
+            style="width:61%;background:linear-gradient(90deg,#b24bff,#7030a0);box-shadow:0 0 8px rgba(178,75,255,.4);transition:width .6s"
+            id="mem-bar"></div>
+        </div>
+      </div>
+      <div class="pt-2 border-t" style="border-color:var(--c-border)">
+        <p class="mono text-[9px] text-slate-600">NEURAL LATENCY: <span style="color:var(--c-green)">14ms</span></p>
+        <p class="mono text-[9px] text-slate-600">UPTIME: <span style="color:var(--c-green)">99.998%</span></p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════ -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden">
+
+    <!-- TOP BAR -->
+    <header class="flex items-center justify-between px-6 py-3 flex-shrink-0"
+      style="border-bottom:1px solid var(--c-border);background:rgba(4,8,18,.8);backdrop-filter:blur(8px)">
+      <div>
+        <h1 class="raj font-bold text-white text-lg leading-none" id="page-title">Digital Content Integrity Network</h1>
+        <p class="mono text-[10px] text-slate-500 mt-0.5" id="page-subtitle">LIVE · GLOBAL PIRACY DETECTION &
+          ENFORCEMENT PLATFORM</p>
+      </div>
+      <div class="flex items-center gap-5">
+        <!-- View Toggle -->
+        <div class="view-toggle" title="Switch view mode">
+          <div class="toggle-opt active" id="toggle-simple" onclick="setView('simple')">
+            <i class="fas fa-eye mr-1.5"></i>SIMPLE
+          </div>
+          <div class="toggle-opt" id="toggle-detail" onclick="setView('detail')">
+            <i class="fas fa-table-list mr-1.5"></i>DETAILED
+          </div>
+        </div>
+        <div style="width:1px;height:32px;background:var(--c-border)"></div>
+        <!-- Live counter -->
+        <div class="text-right">
+          <p class="mono text-[9px] text-slate-500">ALERTS TODAY</p>
+          <p class="raj font-bold text-xl" style="color:var(--c-red)" id="alert-count-header">0</p>
+        </div>
+        <div style="width:1px;height:32px;background:var(--c-border)"></div>
+        <!-- Protect btn -->
+        <button id="protect-btn" onclick="triggerProtect()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all"
+          style="background:linear-gradient(135deg,#0060c0,#00a0e0);color:#fff;box-shadow:0 0 18px rgba(0,140,220,.35);border:1px solid rgba(0,220,255,.3)">
+          <i class="fas fa-lock"></i> PROTECT ASSET
+        </button>
+        <!-- User -->
+        <div class="flex items-center gap-2 pl-4" style="border-left:1px solid var(--c-border)">
+          <div class="text-right">
+            <p class="text-xs font-bold text-white">Agent_Zero</p>
+            <p class="mono text-[9px]" style="color:var(--c-cyan)">ADMINISTRATOR</p>
+          </div>
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=MediaGuard" class="w-8 h-8 rounded-full"
+            style="border:1px solid var(--c-cyan)">
+        </div>
+      </div>
+    </header>
+
+    <!-- SCROLLABLE CONTENT -->
+    <div id="page-dashboard" class="page-view flex-1 overflow-y-auto p-5 space-y-5">
+
+      <!-- ROW 1: Map + Agent Rings -->
+      <div id="hero-row" class="grid grid-cols-12 gap-5" style="min-height:380px">
+
+        <!-- GLOBAL MAP ─── col-span-8 -->
+        <section class="col-span-8 panel panel-glow relative overflow-hidden" style="min-height:380px">
+          <!-- Top overlay bar -->
+          <div class="absolute top-0 left-0 right-0 flex items-center justify-between px-5 py-3 z-20"
+            style="background:rgba(4,8,18,.88);border-bottom:1px solid var(--c-border);backdrop-filter:blur(4px)">
+            <span class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+              <i class="fas fa-globe" style="color:var(--c-cyan)"></i> GLOBAL THREAT MONITORING
+              <span class="chip pulse"
+                style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">LIVE</span>
+            </span>
+            <div class="flex gap-4 text-[10px] mono">
+              <span class="flex items-center gap-1.5"><span class="status-dot"
+                  style="background:var(--c-red);box-shadow:0 0 5px var(--c-red)"></span> INFRINGEMENT</span>
+              <span class="flex items-center gap-1.5"><span class="status-dot"
+                  style="background:var(--c-orange);box-shadow:0 0 5px var(--c-orange)"></span> SUSPECTED</span>
+              <span class="flex items-center gap-1.5"><span class="status-dot"
+                  style="background:var(--c-green);box-shadow:0 0 5px var(--c-green)"></span> VERIFIED</span>
+            </div>
+          </div>
+
+          <!-- LEAFLET MAP -->
+          <div id="leaflet-map"></div>
+
+          <!-- Bottom status -->
+          <div class="absolute bottom-0 left-0 right-0 px-5 py-2.5 flex items-center gap-4 z-20"
+            style="background:rgba(4,8,18,.88);border-top:1px solid var(--c-border);backdrop-filter:blur(4px)">
+            <div class="flex-1">
+              <div class="flex justify-between text-[10px] mono mb-1">
+                <span style="color:#607080">ANALYSIS QUEUE: <span id="queue-count" class="text-white">147</span>
+                  ASSETS</span>
+                <span style="color:var(--c-cyan)">82% THROUGHPUT</span>
+              </div>
+              <div class="h-1.5 rounded-full" style="background:rgba(255,255,255,.06)">
+                <div class="progress-bar" style="width:82%"></div>
+              </div>
+            </div>
+            <div class="flex gap-4 text-[10px] mono text-slate-500">
+              <span>TOTAL PINGS: <span id="ping-total" style="color:var(--c-cyan)">0</span></span>
+              <span>THREATS: <span id="threat-total" style="color:var(--c-red)">0</span></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI ENGINE PANEL ─── col-span-4 -->
+        <section id="ai-engine-panel" class="col-span-4 panel flex flex-col p-5 gap-4">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-microchip" style="color:var(--c-cyan)"></i> AI ENGINE STATUS
+          </h3>
+
+          <!-- Three rings row -->
+          <div class="rings-row flex justify-around items-center py-2">
+            <!-- WATCHER -->
+            <div class="ring-wrapper flex flex-col items-center gap-1">
+              <div class="relative w-[72px] h-[72px]">
+                <svg class="ring-svg w-full h-full">
+                  <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
+                  <circle id="ring-watcher" class="ring-fill ring-active" cx="36" cy="36" r="34" fill="none"
+                    stroke-width="5" stroke="var(--c-cyan)" stroke-dashoffset="40" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="mono text-[10px] font-bold text-white">85%</span>
+                </div>
+              </div>
+              <p class="mono text-[9px] font-bold text-white">WATCHER</p>
+              <span id="watcher-status" class="chip"
+                style="background:rgba(0,255,136,.1);color:var(--c-green);border:1px solid rgba(0,255,136,.25)">SCANNING</span>
+            </div>
+
+            <!-- INVESTIGATOR -->
+            <div class="ring-wrapper flex flex-col items-center gap-1">
+              <div class="relative w-[72px] h-[72px]">
+                <svg class="ring-svg w-full h-full">
+                  <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
+                  <circle id="ring-investigator" class="ring-fill" cx="36" cy="36" r="34" fill="none" stroke-width="5"
+                    stroke="#b24bff" stroke-dashoffset="148" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="mono text-[10px] font-bold text-white">30%</span>
+                </div>
+              </div>
+              <p class="mono text-[9px] font-bold text-white">INVESTIGATOR</p>
+              <span id="inv-status" class="chip"
+                style="background:rgba(178,75,255,.1);color:#b24bff;border:1px solid rgba(178,75,255,.25)">ANALYSIS</span>
+            </div>
+
+            <!-- JUDGE -->
+            <div class="ring-wrapper flex flex-col items-center gap-1">
+              <div class="relative w-[72px] h-[72px]">
+                <svg class="ring-svg w-full h-full">
+                  <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
+                  <circle id="ring-judge" class="ring-fill ring-active" cx="36" cy="36" r="34" fill="none"
+                    stroke-width="5" stroke="var(--c-red)" stroke-dashoffset="22" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="mono text-[10px] font-bold text-white">92%</span>
+                </div>
+              </div>
+              <p class="mono text-[9px] font-bold" style="color:var(--c-red)">JUDGE</p>
+              <span id="judge-status" class="chip"
+                style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">DECIDING</span>
+            </div>
+          </div>
+
+          <!-- ── LATEST VERDICT (always visible) ──── -->
+          <div id="verdict-panel">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="mono text-[9px] font-bold uppercase tracking-widest" style="color:#b24bff">
+                <i class="fas fa-scale-balanced mr-1"></i> LATEST VERDICT
+              </span>
+              <span id="verdict-time" class="mono text-[9px]" style="color:#2a6070">—</span>
+            </div>
+            <p id="verdict-text" class="mono text-[10px] leading-relaxed" style="color:#8a9ab0">
+              Awaiting Judge analysis...
+            </p>
+            <div class="flex items-center justify-between mt-2">
+              <span id="verdict-chip" class="chip"
+                style="background:rgba(178,75,255,.1);color:#6040a0;border:1px solid rgba(178,75,255,.15)">PENDING</span>
+              <span id="verdict-conf" class="mono text-[10px]" style="color:#4a5060">—</span>
+            </div>
+          </div>
+
+          <!-- ── ENGINE DETAILS (hidden in Simple mode) ── -->
+          <div id="engine-details" class="flex flex-col gap-3 flex-1 min-h-0">
+
+            <!-- Decision Engine Bars -->
+            <div class="rounded-lg p-3 space-y-2"
+              style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06)">
+              <div class="flex justify-between items-center mb-1">
+                <span class="mono text-[9px] text-slate-400">DECISION ENGINE</span>
+                <span class="chip"
+                  style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">FLAGGING
+                  ACTIVE</span>
+              </div>
+              <div class="flex gap-1 h-7">
+                <div class="flex-1 rounded"
+                  style="background:rgba(0,220,255,.15);animation:pls 1.8s ease-in-out infinite"></div>
+                <div class="flex-1 rounded" style="background:rgba(0,220,255,.35)"></div>
+                <div class="flex-1 rounded"
+                  style="background:rgba(0,220,255,.15);animation:pls 2.2s ease-in-out infinite"></div>
+                <div class="flex-1 rounded" style="background:rgba(0,220,255,.55)"></div>
+                <div class="flex-1 rounded" style="background:rgba(0,220,255,.1)"></div>
+                <div class="flex-1 rounded"
+                  style="background:rgba(255,45,45,.45);animation:pls 1s ease-in-out infinite"></div>
+                <div class="flex-1 rounded" style="background:rgba(255,45,45,.2)"></div>
+              </div>
+            </div>
+
+            <!-- AGENT REASONING LOG -->
+            <div class="flex flex-col flex-1 min-h-0">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="raj text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-1.5">
+                  <span class="status-dot pulse"
+                    style="background:var(--c-cyan);box-shadow:0 0 5px var(--c-cyan)"></span>
+                  AGENT REASONING LOG
+                </span>
+                <button onclick="clearLog()" class="mono text-[9px] text-slate-600 hover:text-slate-400">CLEAR</button>
+              </div>
+              <div id="reasoning-log" class="p-3 flex-1">
+                <!-- Lines injected by JS -->
+              </div>
+            </div>
+
+          </div><!-- /engine-details -->
+        </section>
+      </div>
+
+    </div><!-- /hero-row -->
+
+    <!-- ═══════════════════════════════════════════
+             DETAIL SECTIONS — hidden in Simple mode
+        ═══════════════════════════════════════════ -->
+    <div id="detail-sections" class="hidden-details space-y-5">
+
+      <!-- ROW 2: Asset Protection Module -->
+      <section class="panel p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-fingerprint" style="color:var(--c-cyan)"></i> ASSET PROTECTION MODULE
+            <span id="task-status-chip" class="chip ml-2"
+              style="background:rgba(0,220,255,.1);color:var(--c-cyan);border:1px solid rgba(0,220,255,.25)">IDLE</span>
+          </h3>
+          <p class="mono text-[9px] text-slate-500">POST /api/v1/protect → <span id="api-status"
+              style="color:var(--c-green)">READY</span></p>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Dropzone -->
+          <div id="dropzone"
+            class="border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 relative overflow-hidden cursor-pointer"
+            style="border-color:rgba(0,220,255,.2);min-height:180px;background:rgba(0,220,255,.02)"
+            onclick="document.getElementById('file-input').click()">
+            <div id="upload-idle" class="flex flex-col items-center gap-2 pointer-events-none">
+              <i class="fas fa-cloud-upload-alt text-3xl" style="color:rgba(0,220,255,.4)"></i>
+              <p class="raj text-sm font-semibold text-white">Drag & Drop or Select File</p>
+              <p class="mono text-[10px] text-slate-500">JPG · PNG · WEBP · MP4 (max 100 MB)</p>
+              <div class="mt-1 px-5 py-2 rounded-lg text-xs font-bold mono"
+                style="background:rgba(0,220,255,.1);border:1px solid rgba(0,220,255,.25);color:var(--c-cyan)">SELECT
+                FILE</div>
+            </div>
+            <div id="upload-preview" class="hidden w-full h-full flex flex-col items-center p-4">
+              <img id="preview-img" src="" alt="" class="max-h-28 rounded-lg object-contain mb-2">
+              <p id="file-name" class="mono text-[10px]" style="color:var(--c-cyan)"></p>
+            </div>
+            <div id="scan-overlay" class="absolute inset-0 scanning hidden pointer-events-none"></div>
+            <input type="file" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer"
+              accept="image/*,video/*">
+          </div>
+
+          <!-- Actions & Log -->
+          <div class="flex flex-col gap-3">
+            <button id="btn-protect" onclick="processProtect()" disabled
+              class="w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              style="background:linear-gradient(135deg,#0060c0,#00a0e0);color:#fff;border:1px solid rgba(0,220,255,.3);box-shadow:0 0 16px rgba(0,140,220,.25)">
+              <i class="fas fa-shield-check"></i> GENERATE INVISIBLE WATERMARK
+            </button>
+            <button id="btn-download"
+              class="hidden w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+              style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);color:var(--c-green)">
+              <i class="fas fa-download"></i> DOWNLOAD PROTECTED ASSET
+            </button>
+            <div id="protect-log" class="hidden rounded-lg p-3 space-y-1.5"
+              style="background:rgba(0,0,0,.4);border:1px solid var(--c-border)">
+              <div id="log1" class="flex items-center gap-2 mono text-[10px] text-slate-500"><i
+                  class="fas fa-circle-notch fa-spin text-slate-600"></i> Analyzing frequency domain...</div>
+              <div id="log2" class="flex items-center gap-2 mono text-[10px] text-slate-600 opacity-40"><i
+                  class="fas fa-circle text-slate-700 text-[8px]"></i> Injecting steganographic bits...</div>
+              <div id="log3" class="flex items-center gap-2 mono text-[10px] text-slate-600 opacity-40"><i
+                  class="fas fa-circle text-slate-700 text-[8px]"></i> Registering on blockchain...</div>
+            </div>
+            <div id="success-msg" class="hidden p-3 rounded-lg flex items-start gap-2"
+              style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2)">
+              <i class="fas fa-shield-check mt-0.5" style="color:var(--c-green)"></i>
+              <div>
+                <p class="raj font-bold text-xs" style="color:var(--c-green)">WATERMARK EMBEDDED SUCCESSFULLY</p>
+                <p class="mono text-[10px] text-slate-400">Asset UID: <span id="asset-uid">MG-0000-X0</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ROW 3: Alert Feed -->
+      <section>
+        <div class="flex items-center justify-between mb-3 px-1">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-triangle-exclamation" style="color:var(--c-red)"></i> ACTIVE INFRINGEMENT ALERTS
+            <span id="alert-badge" class="chip"
+              style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">0</span>
+          </h3>
+          <button class="mono text-[10px] text-slate-500 hover:text-slate-300" onclick="clearAlerts()">CLEAR
+            ALL</button>
+        </div>
+        <div id="alert-feed" class="flex gap-4 overflow-x-auto pb-3 px-1" style="min-height:80px">
+          <div id="no-alerts-msg" class="flex items-center justify-center w-full text-slate-600 mono text-xs">
+            <i class="fas fa-radar mr-2"></i> No active alerts — system is patrolling...
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /detail-sections -->
+
+    </div><!-- /scrollable -->
+    <!-- ═══════════════════════════════════════════════════
+     PAGE: ASSET REGISTRY
+═══════════════════════════════════════════════════ -->
+    <div id="page-assets" class="page-view hidden flex-1 overflow-y-auto p-5 space-y-5">
+      <!-- KPI Row -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="panel p-4 panel-glow">
+          <p class="mono text-[9px] text-slate-500 mb-1">TOTAL ASSETS</p>
+          <p class="raj font-bold text-3xl text-white">2,847</p>
+          <p class="mono text-[9px] mt-1.5 flex items-center gap-1" style="color:var(--c-cyan)"><i
+              class="fas fa-arrow-up text-[8px]"></i> +12 this week</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">PROTECTED</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-green)">2,614</p>
+          <p class="mono text-[9px] mt-1.5 text-slate-500">91.8% coverage</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">BLOCKCHAIN ANCHORED</p>
+          <p class="raj font-bold text-3xl" style="color:#b24bff">2,481</p>
+          <p class="mono text-[9px] mt-1.5 text-slate-500">Immutable ledger</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">UNPROTECTED</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-orange)">233</p>
+          <p class="mono text-[9px] mt-1.5" style="color:var(--c-orange)">Action required</p>
+        </div>
+      </div>
+
+      <!-- Search + Filters -->
+      <div class="panel p-4 flex items-center gap-3">
+        <div class="flex-1 relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input id="asset-search" type="text" placeholder="Search by UID, name, hash, type..." oninput="filterAssets()"
+            class="w-full pl-8 pr-4 py-2 rounded-lg mono text-xs text-white outline-none"
+            style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+        </div>
+        <select id="asset-type-filter" onchange="filterAssets()"
+          class="mono text-[11px] px-3 py-2 rounded-lg outline-none"
+          style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+          <option value="">ALL TYPES</option>
+          <option value="VIDEO">VIDEO</option>
+          <option value="IMAGE">IMAGE</option>
+          <option value="AUDIO">AUDIO</option>
+          <option value="DOCUMENT">DOCUMENT</option>
+        </select>
+        <select id="asset-status-filter" onchange="filterAssets()"
+          class="mono text-[11px] px-3 py-2 rounded-lg outline-none"
+          style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+          <option value="">ALL STATUS</option>
+          <option value="PROTECTED">PROTECTED</option>
+          <option value="UNPROTECTED">UNPROTECTED</option>
+          <option value="FLAGGED">FLAGGED</option>
+        </select>
+        <button onclick="openRegisterModal()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs mono transition-all"
+          style="background:linear-gradient(135deg,#0060c0,#00a0e0);color:#fff;border:1px solid rgba(0,220,255,.3)">
+          <i class="fas fa-plus"></i> REGISTER ASSET
+        </button>
+      </div>
+
+      <!-- Assets Table -->
+      <div class="panel overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3" style="border-bottom:1px solid var(--c-border)">
+          <span class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-database" style="color:var(--c-cyan)"></i> REGISTERED ASSETS
+          </span>
+          <span id="asset-count-label" class="mono text-[10px] text-slate-500">Showing 15 of 2,847</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full" style="border-collapse:collapse">
+            <thead>
+              <tr style="border-bottom:1px solid var(--c-border);background:rgba(0,0,0,.3)">
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Asset UID</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Name / Title</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Type</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Status</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Registered</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Detections</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left px-4 py-2.5 uppercase tracking-wider">
+                  Blockchain Hash</th>
+                <th class="mono text-[9px] text-slate-500 font-normal px-4 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody id="asset-table-body">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+     PAGE: ALERT FEED
+═══════════════════════════════════════════════════ -->
+    <div id="page-alerts" class="page-view hidden flex-1 overflow-y-auto p-5 space-y-5">
+      <!-- Stats -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="panel p-4" style="border-top:2px solid var(--c-red)">
+          <p class="mono text-[9px] text-slate-500 mb-1">CRITICAL</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-red)" id="af-critical">0</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">Needs immediate action</p>
+        </div>
+        <div class="panel p-4" style="border-top:2px solid var(--c-orange)">
+          <p class="mono text-[9px] text-slate-500 mb-1">UNDER REVIEW</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-orange)" id="af-review">0</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">Awaiting human review</p>
+        </div>
+        <div class="panel p-4" style="border-top:2px solid var(--c-green)">
+          <p class="mono text-[9px] text-slate-500 mb-1">RESOLVED</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-green)" id="af-resolved">0</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">Takedowns confirmed</p>
+        </div>
+        <div class="panel p-4" style="border-top:2px solid #b24bff">
+          <p class="mono text-[9px] text-slate-500 mb-1">AUTO-ACTIONED</p>
+          <p class="raj font-bold text-3xl" style="color:#b24bff" id="af-auto">0</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">DMCA auto-dispatched</p>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="panel p-3 flex items-center gap-3 flex-wrap">
+        <div class="flex gap-1" id="af-tab-btns">
+          <button onclick="setAlertFilter('all', this)"
+            class="af-tab-btn active-af-tab mono text-[10px] px-3 py-1.5 rounded-md font-bold">ALL</button>
+          <button onclick="setAlertFilter('critical', this)"
+            class="af-tab-btn mono text-[10px] px-3 py-1.5 rounded-md font-bold">CRITICAL</button>
+          <button onclick="setAlertFilter('review', this)"
+            class="af-tab-btn mono text-[10px] px-3 py-1.5 rounded-md font-bold">PENDING REVIEW</button>
+          <button onclick="setAlertFilter('resolved', this)"
+            class="af-tab-btn mono text-[10px] px-3 py-1.5 rounded-md font-bold">RESOLVED</button>
+        </div>
+        <div style="width:1px;height:24px;background:var(--c-border)"></div>
+        <div class="flex gap-2 flex-wrap" id="af-platform-btns">
+          <button onclick="setAlertPlatform('', this)"
+            class="af-plat-btn active-plat mono text-[10px] px-3 py-1 rounded-md">All Platforms</button>
+          <button onclick="setAlertPlatform('YouTube', this)"
+            class="af-plat-btn mono text-[10px] px-3 py-1 rounded-md"><i class="fab fa-youtube mr-1"
+              style="color:#ff0000"></i>YouTube</button>
+          <button onclick="setAlertPlatform('Instagram', this)"
+            class="af-plat-btn mono text-[10px] px-3 py-1 rounded-md"><i class="fab fa-instagram mr-1"
+              style="color:#e1306c"></i>Instagram</button>
+          <button onclick="setAlertPlatform('Twitter/X', this)"
+            class="af-plat-btn mono text-[10px] px-3 py-1 rounded-md"><i class="fab fa-x-twitter mr-1"></i>X</button>
+          <button onclick="setAlertPlatform('Telegram', this)"
+            class="af-plat-btn mono text-[10px] px-3 py-1 rounded-md"><i class="fab fa-telegram mr-1"
+              style="color:#2ca5e0"></i>Telegram</button>
+          <button onclick="setAlertPlatform('TikTok', this)"
+            class="af-plat-btn mono text-[10px] px-3 py-1 rounded-md"><i class="fab fa-tiktok mr-1"
+              style="color:#fe2c55"></i>TikTok</button>
+        </div>
+        <button onclick="clearAllAlertsFeed()"
+          class="ml-auto mono text-[10px] text-slate-500 hover:text-slate-300 transition-colors"><i
+            class="fas fa-trash-alt mr-1"></i> CLEAR ALL</button>
+      </div>
+
+      <!-- Alert list -->
+      <div class="space-y-3" id="af-list">
+        <!-- Injected by JS -->
+      </div>
+      <div id="af-empty" class="hidden panel p-10 flex flex-col items-center justify-center text-center gap-3">
+        <i class="fas fa-shield-check text-4xl" style="color:rgba(0,255,136,.3)"></i>
+        <p class="raj font-bold text-white text-base">All clear — no alerts match this filter</p>
+        <p class="mono text-[11px] text-slate-500">Agents are actively patrolling...</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+     PAGE: THREAT MAP (Full-screen)
+═══════════════════════════════════════════════════ -->
+    <div id="page-map" class="page-view hidden flex-1 flex gap-0 overflow-hidden">
+      <!-- Full map area -->
+      <div class="flex-1 relative">
+        <div id="leaflet-map-full" style="position:absolute;inset:0;z-index:1"></div>
+        <!-- Overlay legend -->
+        <div class="absolute top-4 right-4 z-10 panel p-3 space-y-1.5" style="min-width:160px">
+          <p class="mono text-[9px] font-bold text-white uppercase tracking-widest mb-2">THREAT LEGEND</p>
+          <div class="flex items-center gap-2 mono text-[10px] text-slate-400"><span class="status-dot"
+              style="background:var(--c-red);box-shadow:0 0 6px var(--c-red)"></span> INFRINGEMENT</div>
+          <div class="flex items-center gap-2 mono text-[10px] text-slate-400"><span class="status-dot"
+              style="background:var(--c-orange);box-shadow:0 0 6px var(--c-orange)"></span> SUSPECTED</div>
+          <div class="flex items-center gap-2 mono text-[10px] text-slate-400"><span class="status-dot"
+              style="background:var(--c-green);box-shadow:0 0 6px var(--c-green)"></span> VERIFIED SAFE</div>
+          <div class="border-t mt-2 pt-2" style="border-color:var(--c-border)">
+            <p class="mono text-[9px] text-slate-500">LIVE PINGS: <span id="map-ping-live"
+                style="color:var(--c-cyan)">0</span></p>
+            <p class="mono text-[9px] text-slate-500">THREATS: <span id="map-threat-live"
+                style="color:var(--c-red)">0</span></p>
+          </div>
+        </div>
+        <!-- Bottom live ticker -->
+        <div class="absolute bottom-0 left-0 right-0 z-10 px-4 py-2.5 flex items-center gap-3 overflow-hidden"
+          style="background:rgba(4,8,18,.9);border-top:1px solid var(--c-border)">
+          <span class="mono text-[9px] font-bold uppercase flex items-center gap-1.5 flex-shrink-0"
+            style="color:var(--c-cyan)"><span class="status-dot pulse" style="background:var(--c-cyan)"></span> LIVE
+            FEED</span>
+          <div id="map-ticker" class="mono text-[10px] text-slate-400 truncate flex-1">Initializing threat feed...</div>
+        </div>
+      </div>
+      <!-- Right stats panel -->
+      <div class="w-100 flex flex-col overflow-y-auto p-4 space-y-4 flex-shrink-0"
+        style="border-left:1px solid var(--c-border);background:rgba(4,8,18,.95)">
+        <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+          <i class="fas fa-chart-column" style="color:var(--c-cyan)"></i> THREAT ANALYTICS
+        </h3>
+
+        <!-- Top regions -->
+        <div class="panel p-3 space-y-2">
+          <p class="mono text-[9px] font-bold text-white uppercase tracking-wider mb-2">Top Infringement Regions</p>
+          <div id="top-regions">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Platform breakdown -->
+        <div class="panel p-3">
+          <p class="mono text-[9px] font-bold text-white uppercase tracking-wider mb-3">By Platform</p>
+          <div id="platform-breakdown" class="space-y-2">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Real-time event log -->
+        <div class="panel p-3 flex flex-wrap flex-col flex-1 min-h-0" style="min-height:200px">
+          <p class="mono text-[9px] font-bold text-white uppercase tracking-wider mb-2">Event Stream</p>
+          <div id="map-event-log" class="flex-1 overflow-y-auto space-y-1"
+            style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#607080">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+     PAGE: INTEL REPORT
+═══════════════════════════════════════════════════ -->
+    <div id="page-report" class="page-view hidden flex-1 overflow-y-auto p-5 space-y-5">
+      <!-- KPIs -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="panel p-4 panel-glow">
+          <p class="mono text-[9px] text-slate-500 mb-1">TOTAL TAKEDOWNS</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-cyan)">14,882</p>
+          <p class="mono text-[9px] mt-1.5 flex items-center gap-1" style="color:var(--c-green)"><i
+              class="fas fa-arrow-up text-[8px]"></i> +8.3% vs last month</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">SUCCESS RATE</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-green)">97.4%</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">DMCA compliance</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">AVG RESPONSE TIME</p>
+          <p class="raj font-bold text-3xl text-white">2.1<span class="text-base">h</span></p>
+          <p class="mono text-[9px] mt-1 text-slate-500">Detection to takedown</p>
+        </div>
+        <div class="panel p-4">
+          <p class="mono text-[9px] text-slate-500 mb-1">REVENUE PROTECTED</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-gold)">$4.2M</p>
+          <p class="mono text-[9px] mt-1 text-slate-500">Estimated this quarter</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-5">
+        <!-- Monthly trend chart -->
+        <div class="col-span-8 panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2">
+              <i class="fas fa-chart-line" style="color:var(--c-cyan)"></i> MONTHLY INFRINGEMENT TREND
+            </h3>
+            <div class="flex gap-2 mono text-[9px]">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block"
+                  style="background:var(--c-red)"></span>Detected</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block"
+                  style="background:var(--c-green)"></span>Resolved</span>
+            </div>
+          </div>
+          <div class="flex items-end gap-2 h-36" id="trend-chart">
+            <!-- Injected by JS -->
+          </div>
+          <div class="flex gap-2 mt-2" id="trend-labels"
+            style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a6070">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Platform pie-ish breakdown -->
+        <div class="col-span-4 panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-pie-chart" style="color:#b24bff"></i> PLATFORM SPLIT
+          </h3>
+          <div id="report-platform-split" class="space-y-3">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Top offenders + geographic -->
+      <div class="grid grid-cols-2 gap-5">
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-user-slash" style="color:var(--c-red)"></i> TOP REPEAT OFFENDERS
+          </h3>
+          <table class="w-full" style="border-collapse:collapse">
+            <thead>
+              <tr style="border-bottom:1px solid var(--c-border)">
+                <th class="mono text-[9px] text-slate-500 font-normal text-left pb-2">HANDLE / CHANNEL</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-left pb-2">PLATFORM</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-right pb-2">VIOLATIONS</th>
+                <th class="mono text-[9px] text-slate-500 font-normal text-right pb-2">STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="offenders-table">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-globe" style="color:var(--c-orange)"></i> GEOGRAPHIC HOTSPOTS
+          </h3>
+          <div id="geo-hotspots" class="space-y-2">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+     PAGE: SETTINGS
+═══════════════════════════════════════════════════ -->
+    <div id="page-settings" class="page-view hidden flex-1 overflow-y-auto p-5 space-y-5">
+      <div class="grid grid-cols-2 gap-5">
+
+        <!-- Agent Configuration -->
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-robot" style="color:var(--c-cyan)"></i> AGENT CONFIGURATION
+          </h3>
+          <div class="space-y-4">
+            <div class="flex items-start justify-between py-3" style="border-bottom:1px solid var(--c-border)">
+              <div>
+                <p class="mono text-xs font-bold text-white">WATCHER AGENT</p>
+                <p class="mono text-[10px] text-slate-500 mt-0.5">Continuous platform scan · 1024 fps hash</p>
+                <div class="flex gap-2 mt-2">
+                  <span class="chip"
+                    style="background:rgba(0,220,255,.08);color:var(--c-cyan);border:1px solid rgba(0,220,255,.2)">YouTube</span>
+                  <span class="chip"
+                    style="background:rgba(0,220,255,.08);color:var(--c-cyan);border:1px solid rgba(0,220,255,.2)">Instagram</span>
+                  <span class="chip"
+                    style="background:rgba(0,220,255,.08);color:var(--c-cyan);border:1px solid rgba(0,220,255,.2)">+4</span>
+                </div>
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked onchange="toggleAgent('watcher',this)"><span
+                  class="toggle-track"></span></label>
+            </div>
+            <div class="flex items-start justify-between py-3" style="border-bottom:1px solid var(--c-border)">
+              <div>
+                <p class="mono text-xs font-bold text-white">INVESTIGATOR AGENT</p>
+                <p class="mono text-[10px] text-slate-500 mt-0.5">Deep forensic analysis · metadata + CDN</p>
+                <p class="mono text-[10px] mt-1.5 text-slate-500">Confidence threshold: <span id="inv-threshold-val"
+                    style="color:var(--c-cyan)">75%</span></p>
+                <input type="range" min="50" max="99" value="75"
+                  oninput="document.getElementById('inv-threshold-val').textContent=this.value+'%'" class="mt-1 w-32"
+                  style="accent-color:var(--c-cyan)">
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked
+                  onchange="toggleAgent('investigator',this)"><span class="toggle-track"></span></label>
+            </div>
+            <div class="flex items-start justify-between py-3">
+              <div>
+                <p class="mono text-xs font-bold" style="color:var(--c-red)">JUDGE AGENT</p>
+                <p class="mono text-[10px] text-slate-500 mt-0.5">AI verdict engine · DMCA auto-dispatch</p>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="mono text-[10px] text-slate-500">Auto-takedown above:</span>
+                  <span id="judge-threshold-val" class="mono text-[10px]" style="color:var(--c-red)">90%</span>
+                </div>
+                <input type="range" min="70" max="99" value="90"
+                  oninput="document.getElementById('judge-threshold-val').textContent=this.value+'%'" class="mt-1 w-32"
+                  style="accent-color:var(--c-red)">
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked onchange="toggleAgent('judge',this)"><span
+                  class="toggle-track"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Platform Monitoring -->
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-satellite-dish" style="color:#b24bff"></i> PLATFORM MONITORING
+          </h3>
+          <div class="space-y-3" id="platform-toggles">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-bell" style="color:var(--c-orange)"></i> NOTIFICATIONS
+          </h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--c-border)">
+              <div>
+                <p class="mono text-xs text-white">Critical Alerts (≥90%)</p>
+                <p class="mono text-[10px] text-slate-500">Immediate email + SMS</p>
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--c-border)">
+              <div>
+                <p class="mono text-xs text-white">Medium Confidence (75–89%)</p>
+                <p class="mono text-[10px] text-slate-500">Email digest every 4 hours</p>
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--c-border)">
+              <div>
+                <p class="mono text-xs text-white">Takedown Confirmed</p>
+                <p class="mono text-[10px] text-slate-500">Confirmation receipt via email</p>
+              </div>
+              <label class="settings-toggle"><input type="checkbox" checked><span class="toggle-track"></span></label>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <div>
+                <p class="mono text-xs text-white">Weekly Intel Report</p>
+                <p class="mono text-[10px] text-slate-500">PDF summary every Monday 08:00</p>
+              </div>
+              <label class="settings-toggle"><input type="checkbox"><span class="toggle-track"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Keys -->
+        <div class="panel p-5">
+          <h3 class="raj font-bold text-xs text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+            <i class="fas fa-key" style="color:var(--c-gold)"></i> API CONFIGURATION
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <p class="mono text-[10px] text-slate-500 mb-1">MEDIAGUARD API KEY</p>
+              <div class="flex gap-2">
+                <input type="password" value="mg_live_k9x2mPqR8vL4nZwB0cY7" readonly
+                  class="flex-1 mono text-[11px] px-3 py-2 rounded-lg"
+                  style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+                <button
+                  onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password';this.innerHTML=this.previousElementSibling.type==='password'?'<i class=\'fas fa-eye\'></i>':'<i class=\'fas fa-eye-slash\'></i>'"
+                  class="px-3 py-2 rounded-lg mono text-[10px]"
+                  style="background:rgba(0,220,255,.08);border:1px solid var(--c-border);color:var(--c-cyan)"><i
+                    class="fas fa-eye"></i></button>
+              </div>
+            </div>
+            <div>
+              <p class="mono text-[10px] text-slate-500 mb-1">BLOCKCHAIN RPC ENDPOINT</p>
+              <input type="text" value="https://rpc.mediaguard.io/v2/mainnet" readonly
+                class="w-full mono text-[11px] px-3 py-2 rounded-lg"
+                style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+            </div>
+            <div>
+              <p class="mono text-[10px] text-slate-500 mb-1">WEBHOOK CALLBACK URL</p>
+              <input type="text" value="https://yourapp.io/webhooks/mediaguard"
+                class="w-full mono text-[11px] px-3 py-2 rounded-lg outline-none"
+                style="background:rgba(0,0,0,.4);border:1px solid var(--c-border);color:#b0bec5">
+            </div>
+            <button
+              onclick="showToast('<i class=\'fas fa-check-circle\' style=\'color:var(--c-green)\'></i> API configuration saved.','success')"
+              class="w-full py-2 rounded-lg mono text-[11px] font-bold transition-all mt-1"
+              style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);color:var(--c-green)">
+              <i class="fas fa-save mr-2"></i>SAVE CONFIGURATION
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Danger zone -->
+      <div class="panel p-5" style="border-color:rgba(255,45,45,.25)">
+        <h3 class="raj font-bold text-xs uppercase tracking-widest flex items-center gap-2 mb-4"
+          style="color:var(--c-red)">
+          <i class="fas fa-triangle-exclamation"></i> DANGER ZONE
+        </h3>
+        <div class="flex gap-4">
+          <button
+            onclick="showToast('<i class=\'fas fa-sync\' style=\'color:var(--c-orange)\'></i> Agent memory cleared. Re-initializing...','info')"
+            class="px-4 py-2 rounded-lg mono text-[11px] font-bold transition-all"
+            style="background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.3);color:var(--c-orange)">
+            <i class="fas fa-broom mr-2"></i>CLEAR AGENT MEMORY
+          </button>
+          <button
+            onclick="showToast('<i class=\'fas fa-database\' style=\'color:var(--c-red)\'></i> Alert database purged.','error')"
+            class="px-4 py-2 rounded-lg mono text-[11px] font-bold transition-all"
+            style="background:rgba(255,45,45,.08);border:1px solid rgba(255,45,45,.3);color:var(--c-red)">
+            <i class="fas fa-trash-alt mr-2"></i>PURGE ALERT DATABASE
+          </button>
+          <button
+            onclick="showToast('<i class=\'fas fa-rotate-right\' style=\'color:var(--c-cyan)\'></i> All agents restarted.','success')"
+            class="px-4 py-2 rounded-lg mono text-[11px] font-bold transition-all"
+            style="background:rgba(0,220,255,.06);border:1px solid rgba(0,220,255,.25);color:var(--c-cyan)">
+            <i class="fas fa-power-off mr-2"></i>RESTART ALL AGENTS
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <!-- (modal, toasts, script remain below) -->
+
+  <!-- ═══════════════════════════════════════════════════
+     HUMAN-IN-THE-LOOP MODAL
+═══════════════════════════════════════════════════ -->
+  <div id="modal-overlay" onclick="closeModal(event)">
+    <div id="modal-box" class="panel p-6" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="raj font-bold text-white text-base uppercase tracking-wide flex items-center gap-2">
+          <i class="fas fa-scale-balanced" style="color:var(--c-orange)"></i> HUMAN-IN-THE-LOOP REVIEW
+        </h2>
+        <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors"><i
+            class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Side by side comparison -->
+      <div class="grid grid-cols-2 gap-4 mb-5">
+        <div class="rounded-xl overflow-hidden" style="border:1px solid rgba(0,220,255,.2)">
+          <div class="px-4 py-2 flex items-center gap-2"
+            style="background:rgba(0,220,255,.06);border-bottom:1px solid rgba(0,220,255,.15)">
+            <i class="fas fa-check-circle text-xs" style="color:var(--c-green)"></i>
+            <span class="mono text-[10px] font-bold text-white">ORIGINAL ASSET</span>
+          </div>
+          <div class="flex items-center justify-center p-4" style="background:rgba(0,0,0,.3);min-height:150px">
+            <div class="text-center">
+              <i class="fas fa-photo-film text-4xl mb-2" style="color:rgba(0,220,255,.3)"></i>
+              <p class="mono text-[10px] text-slate-500" id="modal-orig-id">ASSET_ID</p>
+              <p class="mono text-[9px] text-slate-600">Watermarked · Registered</p>
+            </div>
+          </div>
+        </div>
+        <div class="rounded-xl overflow-hidden" style="border:1px solid rgba(255,45,45,.3)">
+          <div class="px-4 py-2 flex items-center gap-2"
+            style="background:rgba(255,45,45,.06);border-bottom:1px solid rgba(255,45,45,.2)">
+            <i class="fas fa-triangle-exclamation text-xs" style="color:var(--c-red)"></i>
+            <span class="mono text-[10px] font-bold text-white">SUSPECTED PIRACY</span>
+          </div>
+          <div class="flex items-center justify-center p-4" style="background:rgba(0,0,0,.3);min-height:150px">
+            <div class="text-center">
+              <i class="fab fa-youtube text-4xl mb-2" id="modal-platform-icon" style="color:rgba(255,45,45,.5)"></i>
+              <p class="mono text-[10px] text-slate-500" id="modal-source">SOURCE</p>
+              <p class="mono text-[9px]" id="modal-confidence" style="color:var(--c-red)">CONFIDENCE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reasoning snippet -->
+      <div class="rounded-lg p-4 mb-5 mono text-[11px]"
+        style="background:rgba(0,0,0,.5);border:1px solid rgba(178,75,255,.2)">
+        <p class="text-[9px] font-bold mb-1" style="color:#b24bff">JUDGE AGENT REASONING</p>
+        <p id="modal-reasoning" class="text-slate-300 leading-relaxed"></p>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-3">
+        <button id="modal-confirm-btn" onclick="modalAction('confirm')"
+          class="btn-confirm flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+          <i class="fas fa-gavel"></i> CONFIRM TAKEDOWN
+        </button>
+        <button id="modal-ignore-btn" onclick="modalAction('ignore')"
+          class="btn-ignore flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+          <i class="fas fa-heart"></i> IGNORE / FAN CONTENT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed top-5 right-5 z-[300] flex flex-col gap-2 items-end pointer-events-none"></div>
+</body>
+<script src="js/script.js"></script>
+
+</html>
