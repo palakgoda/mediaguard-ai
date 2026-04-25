@@ -752,3 +752,71 @@ body.simple-mode #ai-engine-panel .rings-row {
 .threat-marker-dot.green::after {
     background: rgba(0, 255, 136, .5);
 }
+
+/* Final Settings Polish */
+#platform-toggles {
+    max-height: 320px;
+    /* Limits height so it doesn't push the page down */
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+/* Custom scrollbar for the platforms list */
+#platform-toggles::-webkit-scrollbar {
+    width: 4px;
+}
+
+#platform-toggles::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+#platform-toggles::-webkit-scrollbar-thumb {
+    background: var(--c-cyan);
+    border-radius: 10px;
+}
+
+/* Container for the table rows */
+#asset-table-body {
+    display: block;
+    max-height: 400px;
+    /* Adjust this height as needed */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-cyan) transparent;
+}
+
+/* Ensure the header stays aligned if using a block-display body */
+.asset-registry-table thead,
+.asset-registry-table tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* 1. The wrapper around the table */
+.registry-table-wrapper {
+    max-height: 440px;
+    /* Adjust based on your screen size */
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-cyan) transparent;
+}
+
+/* 2. Make the Header Sticky */
+.asset-registry-table thead th {
+    position: sticky;
+    top: 0;
+    background: #0a0e14;
+    /* Match your panel background color */
+    z-index: 10;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 3. Keep cells aligned */
+.asset-registry-table {
+    width: 100%;
+    border-collapse: collapse;
+}

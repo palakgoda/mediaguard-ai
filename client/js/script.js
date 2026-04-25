@@ -1,3 +1,23 @@
+const PAGE_META = {
+    dashboard: { title: 'Digital Content Integrity Network', sub: 'LIVE · GLOBAL PIRACY DETECTION & ENFORCEMENT PLATFORM' },
+    assets: { title: 'Asset Registry', sub: 'PROTECTED ASSETS · BLOCKCHAIN RECORDS · WATERMARK INDEX' },
+    alerts: { title: 'Alert Feed', sub: 'LIVE INFRINGEMENT ALERTS · HUMAN-IN-THE-LOOP REVIEW QUEUE' },
+    map: { title: 'Global Threat Map', sub: 'REAL-TIME GEOLOCATION · LIVE THREAT INTELLIGENCE FEED' },
+    report: { title: 'Intelligence Report', sub: 'ANALYTICS · TRENDS · ENFORCEMENT PERFORMANCE METRICS' },
+    settings: { title: 'System Settings', sub: 'AGENT CONFIG · API KEYS · PLATFORM TOGGLES · NOTIFICATIONS' },
+};
+
+const AF_DATA = [
+    { id: 'ALT-0001', source: 'YouTube', assetId: 'MG-1198-X4', confidence: 98, status: 'critical', reasoning: 'Unauthorized full re-upload of UCL Match highlights in UK. Fingerprints match at 98.3%.', icon: 'fab fa-youtube', color: '#ff0000', ts: '09:14:22' },
+    { id: 'ALT-0002', source: 'TikTok', assetId: 'MG-1105-X1', confidence: 96, status: 'critical', reasoning: 'Premier League audio fingerprint match. Speed-shifted +10% to evade hash detection.', icon: 'fab fa-tiktok', color: '#fe2c55', ts: '09:18:05' },
+    { id: 'ALT-0003', source: 'Instagram', assetId: 'MG-0983-X2', confidence: 94, status: 'review', reasoning: 'NBA Finals clip extracted from 4K master, reposted as Reel. No license found.', icon: 'fab fa-instagram', color: '#e1306c', ts: '09:22:41' },
+    { id: 'ALT-0004', source: 'Twitter/X', assetId: 'MG-1042-X7', confidence: 99, status: 'critical', reasoning: 'Full match clip shared virally. Geo-block bypass via VPN detected. UUID confirmed.', icon: 'fab fa-x-twitter', color: '#00dcff', ts: '09:31:09' },
+    { id: 'ALT-0005', source: 'Telegram', assetId: 'MG-1566-X3', confidence: 91, status: 'review', reasoning: 'Private channel distributing live stream link. 2,300 active viewers. Jurisdiction: RU/DE.', icon: 'fab fa-telegram', color: '#2ca5e0', ts: '09:45:18' },
+    { id: 'ALT-0006', source: 'YouTube', assetId: 'MG-1780-X9', confidence: 87, status: 'resolved', reasoning: 'Unlisted channel re-upload. Takedown notice dispatched and confirmed. Removed.', icon: 'fab fa-youtube', color: '#ff0000', ts: '10:02:33' },
+    { id: 'ALT-0007', source: 'Pinterest', assetId: 'MG-0888-X5', confidence: 82, status: 'resolved', reasoning: 'High-res thumbnail stripped of EXIF. Reverse image search confirms ownership.', icon: 'fab fa-pinterest', color: '#e60023', ts: '10:15:47' },
+    { id: 'ALT-0008', source: 'TikTok', assetId: 'MG-1677-X7', confidence: 93, status: 'review', reasoning: 'Interview clip with overlay text. Voice recognition confirms protected content.', icon: 'fab fa-tiktok', color: '#fe2c55', ts: '10:28:59' },
+];
+
 const STATE = {
     activeTaskID: 'TK-' + Math.floor(1000 + Math.random() * 9000),
     alertCount: 0,
@@ -6,6 +26,20 @@ const STATE = {
     memLoad: 61,
     currentAlertID: null,
     alerts: [],
+};
+
+// ── Shared System Configuration ──────────────────
+const SYSTEM_CONFIG = {
+    platforms: [
+        { id: 'youtube', name: 'YouTube', icon: 'fab fa-youtube', color: '#ff0000', active: true, share: 28 },
+        { id: 'instagram', name: 'Instagram', icon: 'fab fa-instagram', color: '#e1306c', active: true, share: 12 },
+        { id: 'twitter', name: 'Twitter/X', icon: 'fab fa-x-twitter', color: '#fff', active: true, share: 15 },
+        { id: 'tiktok', name: 'TikTok', icon: 'fab fa-tiktok', color: '#fe2c55', active: true, share: 20 },
+        { id: 'telegram', name: 'Telegram', icon: 'fab fa-telegram', color: '#2ca5e0', active: true, share: 15 },
+        { id: 'pinterest', name: 'Pinterest', icon: 'fab fa-pinterest', color: '#e60023', active: true, share: 4 },
+        { id: 'dailymotion', name: 'Dailymotion', icon: 'fas fa-play-circle', color: '#0066dc', active: false, share: 3 },
+        { id: 'vimeo', name: 'Vimeo', icon: 'fab fa-vimeo-v', color: '#1ab7ea', active: false, share: 3 }
+    ]
 };
 
 // ── Reasoning log phrases ──────────────────────────
@@ -40,24 +74,53 @@ function startReasoningStream() {
     const eventSource = new EventSource('/api/logs/stream');
 
     eventSource.onmessage = (event) => {
-        const logData = JSON.parse(event.data);
-        // Map backend roles to your UI types
-        // Backend: concierge, watcher, investigator, judge, rectifier
-        // Frontend: info, warn, judge, alert, ok
+        const data = JSON.parse(event.data);
+        const logs = data.logs;
+        if (!logs || logs.length === 0) return;
 
-        let type = 'info';
-        if (logData.role === 'judge') type = 'judge';
-        if (logData.role === 'rectifier') type = 'ok';
-        if (logData.status?.includes('Pending')) type = 'warn';
+        const lastLog = logs[logs.length - 1];
+        const msg = lastLog.message || "";
+        const agent = lastLog.agent?.toLowerCase();
 
-        appendLog(type, logData.message);
+        // 1. Append to the visual reasoning log
+        appendLog(agent || 'info', msg);
+
+        // 2. Map Backend logs to UI Ring Statuses AND Verdict Panel
+        if (msg.includes("Pending_Watcher")) {
+            updateAgentUI('watcher', 50, 'SCANNING', 'var(--c-cyan)');
+            // Update Verdict Box to show the process has started
+            updateVerdict('info', "Metadata Scan in progress...", null);
+        }
+        else if (msg.includes("Pending_Investigator")) {
+            updateAgentUI('watcher', 100, 'COMPLETE', 'var(--c-green)');
+            updateAgentUI('investigator', 50, 'ANALYZING', '#b24bff');
+            updateVerdict('info', "Analyzing piracy patterns...", null);
+        }
+        else if (msg.includes("Pending_Judge")) {
+            updateAgentUI('investigator', 100, 'COMPLETE', 'var(--c-green)');
+            updateAgentUI('judge', 50, 'DECIDING', 'var(--c-red)');
+            updateVerdict('judge', "Evaluating evidence for final verdict...", null);
+        }
+        // --- THIS PART CONNECTS THE VERDICT BOX RESULTS ---
+        else if (msg.includes("Decision reached: BLOCK")) {
+            // Flips the verdict box to RED/TAKEDOWN
+            updateVerdict('alert', "UNAUTHORIZED RE-UPLOAD DETECTED - BLOCK INITIATED", 99);
+        }
+        else if (msg.includes("Decision reached: ALLOW")) {
+            // Flips the verdict box to GREEN/CLEARED
+            updateVerdict('ok', "Asset integrity verified - Licensed use", 100);
+        }
+        else if (msg.includes("Completed")) {
+            updateAgentUI('judge', 100, 'COMPLETE', 'var(--c-green)');
+            showToast("🛡️ Asset Secured Successfully", "success");
+            // Final confirmation in the verdict box
+            updateVerdict('ok', "TAKEDOWN ENFORCED: Asset removed from unauthorized platform", 100);
+        }
     };
 
-    eventSource.onerror = (err) => {
-        console.error("SSE Connection failed:", err);
+    eventSource.onerror = () => {
         eventSource.close();
-        // Retry connection after 5 seconds
-        setTimeout(startReasoningStream, 5000);
+        setTimeout(startReasoningStream, 3000);
     };
 }
 
@@ -100,93 +163,58 @@ const THREAT_CONFIG = {
 };
 
 window.addThreatPing = function (lat, lng, type = 'threat', city = '') {
+    // SAFETY SHIELD: Stop the crash if coordinates are broken
+    if (isNaN(lat) || isNaN(lng) || lat === null) return;
+
     if (!leafletMap) return;
 
     STATE.threatTotal++;
     pingCount++;
-    document.getElementById('threat-total').textContent = STATE.threatTotal;
-    document.getElementById('ping-total').textContent = pingCount;
+
+    // Update UI numbers
+    if (document.getElementById('threat-total')) document.getElementById('threat-total').textContent = STATE.threatTotal;
+    if (document.getElementById('ping-total')) document.getElementById('ping-total').textContent = pingCount;
 
     const cfg = THREAT_CONFIG[type] || THREAT_CONFIG.threat;
 
-    // 1. Pulsing dot via DivIcon
+    // Create marker
     const dotIcon = L.divIcon({
         className: '',
         html: `<div class="threat-marker-dot ${cfg.cls}" style="width:10px;height:10px"></div>`,
         iconSize: [10, 10],
-        iconAnchor: [5, 5],
-        popupAnchor: [0, -10],
+        iconAnchor: [5, 5]
     });
 
-    // 2. Ripple circle
-    const ripple = L.circle([lat, lng], {
-        radius: 350000,
-        color: cfg.color,
-        fillColor: cfg.color,
-        fillOpacity: 0.06,
-        weight: 1.2,
-        opacity: 0.5,
-    }).addTo(leafletMap);
+    const marker = L.marker([lat, lng], { icon: dotIcon }).addTo(leafletMap);
 
-    // 3. Marker with popup
-    const ts = new Date().toTimeString().slice(0, 8);
-    const popupContent = `
-        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#b0bec5;background:#070e1c;border:1px solid rgba(0,220,255,.2);border-radius:6px;padding:10px 14px;min-width:200px">
-            <div style="color:${cfg.color};font-weight:bold;font-size:12px;margin-bottom:6px">${cfg.label}</div>
-            ${city ? `<div style="color:#00dcff;margin-bottom:4px">📍 ${city}</div>` : ''}
-            <div style="color:#607080">LAT: <span style="color:#fff">${lat.toFixed(3)}</span></div>
-            <div style="color:#607080">LNG: <span style="color:#fff">${lng.toFixed(3)}</span></div>
-            <div style="color:#607080;margin-top:4px">TIME: <span style="color:#fff">${ts}</span></div>
-        </div>`;
+    // Auto-clean markers
+    setTimeout(() => { try { leafletMap.removeLayer(marker); } catch (e) { } }, 8000);
 
-    const marker = L.marker([lat, lng], { icon: dotIcon })
-        .addTo(leafletMap)
-        .bindPopup(popupContent, { className: 'mediaguard-popup', maxWidth: 240 });
-
-    // 4. Auto-remove after 8s
-    setTimeout(() => {
-        try { leafletMap.removeLayer(marker); leafletMap.removeLayer(ripple); } catch (e) { }
-    }, 8000);
-
-    // 5. Fly to new threat (only for infringements)
+    // Only "Fly" the map if we aren't already zoomed in too much
     if (type === 'threat') {
-        leafletMap.flyTo([lat, lng], Math.max(leafletMap.getZoom(), 3), { duration: 1.4, easeLinearity: 0.25 });
+        leafletMap.flyTo([lat, lng], 3, { duration: 1.4 });
     }
 };
 
 // Remove old CSS-based ping function
 function spawnRandomPing() {
-    const coords = [
-        [51.5, -0.12, 'threat', 'London, UK'],
-        [48.85, 2.35, 'threat', 'Paris, FR'],
-        [40.71, -74.01, 'threat', 'New York, US'],
-        [35.68, 139.69, 'suspect', 'Tokyo, JP'],
-        [19.07, 72.88, 'suspect', 'Mumbai, IN'],
-        [-33.87, 18.42, 'safe', 'Cape Town, ZA'],
-        [55.75, 37.62, 'threat', 'Moscow, RU'],
-        [22.32, 114.17, 'suspect', 'Hong Kong, HK'],
-        [34.05, -118.24, 'safe', 'Los Angeles, US'],
-        [-23.55, -46.63, 'threat', 'São Paulo, BR'],
-        [52.52, 13.40, 'safe', 'Berlin, DE'],
-        [1.35, 103.82, 'threat', 'Singapore, SG'],
-        [41.90, 12.48, 'threat', 'Rome, IT'],
-        [37.77, -122.42, 'suspect', 'San Francisco, US'],
-        [59.33, 18.07, 'safe', 'Stockholm, SE'],
-        [25.20, 55.27, 'suspect', 'Dubai, UAE'],
-        [39.91, 116.39, 'threat', 'Beijing, CN'],
-        [-37.81, 144.96, 'suspect', 'Melbourne, AU'],
-        [28.61, 77.21, 'safe', 'New Delhi, IN'],
-        [43.65, -79.38, 'suspect', 'Toronto, CA'],
-        [6.52, 3.38, 'threat', 'Lagos, NG'],
-        [31.23, 121.47, 'threat', 'Shanghai, CN'],
-        [-34.60, -58.38, 'threat', 'Buenos Aires, AR'],
-        [60.17, 24.94, 'safe', 'Helsinki, FI'],
-        [37.57, 126.98, 'threat', 'Seoul, KR'],
+    // 1. Pick a random hotspot to ensure we have REAL numbers
+    const hotspots = [
+        { lat: 51.5074, lng: -0.1278, city: 'London, UK' },
+        { lat: 40.7128, lng: -74.0060, city: 'New York, US' },
+        { lat: 35.6895, lng: 139.6917, city: 'Tokyo, JP' },
+        { lat: -23.5505, lng: -46.6333, city: 'São Paulo, BR' },
+        { lat: 28.6139, lng: 77.2090, city: 'New Delhi, IN' }
     ];
-    const pick = coords[Math.floor(Math.random() * coords.length)];
-    const jLat = pick[0] + (Math.random() - .5) * 2;
-    const jLng = pick[1] + (Math.random() - .5) * 2;
-    addThreatPing(jLat, jLng, pick[2], pick[3]);
+
+    const pick = hotspots[Math.floor(Math.random() * hotspots.length)];
+
+    // 2. Add a tiny bit of random jitter so markers aren't on top of each other
+    const jLat = pick.lat + (Math.random() - 0.5) * 2;
+    const jLng = pick.lng + (Math.random() - 0.5) * 2;
+
+    // 3. Send the ping to the map
+    addThreatPing(jLat, jLng, 'threat', pick.city);
 }
 
 // ── Alert cards ────────────────────────────────────
@@ -392,26 +420,23 @@ function setView(mode) {
     const body = document.body;
     const detailSections = document.getElementById('detail-sections');
     const engineDetails = document.getElementById('engine-details');
-    const simpleBtn = document.getElementById('toggle-simple');
-    const detailBtn = document.getElementById('toggle-detail');
+
+    // We removed the simpleBtn and detailBtn selectors because we deleted them from HTML!
 
     if (mode === 'simple') {
         body.classList.add('simple-mode');
-        detailSections.classList.add('hidden-details');
-        engineDetails.classList.add('hidden-details');
-        simpleBtn.classList.add('active');
-        simpleBtn.classList.remove('active-detail');
-        detailBtn.classList.remove('active', 'active-detail');
+        if (detailSections) detailSections.classList.add('hidden-details');
+        if (engineDetails) engineDetails.classList.add('hidden-details');
     } else {
         body.classList.remove('simple-mode');
-        detailSections.classList.remove('hidden-details');
-        engineDetails.classList.remove('hidden-details');
-        detailBtn.classList.add('active-detail');
-        detailBtn.classList.remove('active');
-        simpleBtn.classList.remove('active', 'active-detail');
-        // Invalidate Leaflet map size after panel expands
+        if (detailSections) detailSections.classList.remove('hidden-details');
+        if (engineDetails) engineDetails.classList.remove('hidden-details');
+
+        // Leaflet map needs a nudge when the container changes size
         setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 460);
     }
+
+    console.log(`System Mode: ${mode.toUpperCase()}`);
 }
 
 // ── Verdict Updater ────────────────────────────────
@@ -457,65 +482,104 @@ function showToast(html, type = 'info') {
 }
 
 // ── Ring animation (Firestore simulation) ─────────
-function animateRings() {
-    const rings = [
-        { el: document.getElementById('ring-watcher'), statusEl: document.getElementById('watcher-status') },
-        { el: document.getElementById('ring-investigator'), statusEl: document.getElementById('inv-status') },
-        { el: document.getElementById('ring-judge'), statusEl: document.getElementById('judge-status') },
-    ];
-    rings.forEach(r => {
-        if (!r.el) return;
-        const val = Math.floor(Math.random() * 180 + 20);
-        r.el.style.strokeDashoffset = String(213 - (val / 100) * 213);
-    });
+function updateAgentUI(agentType, pct, statusText, color) {
+    // 1. Find the SVG circle (the ring itself)
+    const ring = document.getElementById(`ring-${agentType}`);
+    // 2. Find the percentage text (the "0%")
+    const pctLabel = document.getElementById(`${agentType === 'investigator' ? 'inv' : agentType}-pct`);
+    // 3. Find the status chip (the "IDLE")
+    const statusChip = document.getElementById(`${agentType === 'investigator' ? 'inv' : agentType}-status`);
+
+    if (ring) {
+        // The total circumference is 213 (based on your radius of 34)
+        const totalLength = 213;
+        const offset = totalLength - (pct / 100) * totalLength;
+
+        // Update the circle fill
+        ring.style.strokeDashoffset = offset;
+
+        // Add the glowing class if the agent is active or complete
+        if (pct > 0) {
+            ring.classList.add('ring-active');
+            ring.style.stroke = color; // Apply the agent's specific color
+        } else {
+            ring.classList.remove('ring-active');
+        }
+    }
+
+    if (pctLabel) pctLabel.textContent = `${pct}%`;
+
+    if (statusChip) {
+        statusChip.textContent = statusText;
+        statusChip.style.color = color;
+        statusChip.style.borderColor = color + '44'; // Subtle border
+        statusChip.style.background = color + '11';  // Subtle background
+    }
 }
 
 // ── Page routing ──────────────────────────────────
-const PAGE_META = {
-    dashboard: { title: 'Digital Content Integrity Network', sub: 'LIVE · GLOBAL PIRACY DETECTION & ENFORCEMENT PLATFORM' },
-    assets: { title: 'Asset Registry', sub: 'PROTECTED ASSETS · BLOCKCHAIN RECORDS · WATERMARK INDEX' },
-    alerts: { title: 'Alert Feed', sub: 'LIVE INFRINGEMENT ALERTS · HUMAN-IN-THE-LOOP REVIEW QUEUE' },
-    map: { title: 'Global Threat Map', sub: 'REAL-TIME GEOLOCATION · LIVE THREAT INTELLIGENCE FEED' },
-    report: { title: 'Intelligence Report', sub: 'ANALYTICS · TRENDS · ENFORCEMENT PERFORMANCE METRICS' },
-    settings: { title: 'System Settings', sub: 'AGENT CONFIG · API KEYS · PLATFORM TOGGLES · NOTIFICATIONS' },
-};
 
 let fullMapInit = false;
 let currentPage = 'dashboard';
 
 function switchTab(tab, el) {
+    // 1. Update navigation active state
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     el.classList.add('active');
 
-    // Hide all pages
-    document.querySelectorAll('.page-view').forEach(p => {
-        p.classList.add('hidden');
-    });
+    // 2. Hide ALL page views
+    document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
 
-    // Show target
+    // 3. CRITICAL: Hide the Protection/Detail sections explicitly
+    const detailSections = document.getElementById('detail-sections');
+    if (detailSections) {
+        detailSections.classList.add('hidden');
+        detailSections.classList.add('hidden-details');
+    }
+
+    // 4. Show the specific target page
     const page = document.getElementById('page-' + tab);
     if (page) page.classList.remove('hidden');
 
-    // Update header
+    // 5. Special Logic for "Live Patrol" (Dashboard)
+    if (tab === 'dashboard') {
+        // Reset to show the Map and Rings by default
+        const heroRow = document.getElementById('hero-row');
+        if (heroRow) heroRow.classList.remove('hidden');
+
+        // Ensure subtitle is reset
+        document.getElementById('page-subtitle').textContent = "LIVE · GLOBAL PIRACY DETECTION & ENFORCEMENT PLATFORM";
+    }
+
+    // Update Header Meta
     const meta = PAGE_META[tab] || PAGE_META.dashboard;
     document.getElementById('page-title').textContent = meta.title;
-    document.getElementById('page-subtitle').textContent = meta.sub;
-
-    // Toggle the Simple/Detailed toggle — only relevant on dashboard
-    document.querySelector('.view-toggle').style.opacity = tab === 'dashboard' ? '1' : '0.3';
-    document.querySelector('.view-toggle').style.pointerEvents = tab === 'dashboard' ? 'auto' : 'none';
+    if (tab !== 'dashboard') {
+        document.getElementById('page-subtitle').textContent = meta.sub;
+    }
 
     currentPage = tab;
 
-    // Lazy init full map page
+    // Refresh maps if needed
     if (tab === 'map' && !fullMapInit) { initFullMap(); fullMapInit = true; }
-    if (tab === 'map' && fullLeafletMap) setTimeout(() => fullLeafletMap.invalidateSize(), 60);
 
-    // Populate pages on first visit
-    if (tab === 'assets') populateAssetTable();
-    if (tab === 'alerts') renderAlertFeed();
-    if (tab === 'report') renderReport();
-    if (tab === 'settings') renderSettings();
+    if (tab === 'settings') {
+        renderSettings();
+    }
+
+    if (tab === 'report') {
+        renderReport();
+    }
+    if (tab === 'alerts') {
+        renderAlertFeed();
+    }
+    if (tab === 'assets') {
+        // Force the table and stats to populate
+        populateAssetTable();
+        // Reset the rendered guard if you want it to refresh data every time
+        assetTableRendered = false;
+    }
+
 }
 
 // ── ASSET REGISTRY ─────────────────────────────────
@@ -539,6 +603,25 @@ const ASSET_DATA = [
 
 let assetTableRendered = false;
 function populateAssetTable() {
+    // 1. Calculate live stats from ASSET_DATA
+    const total = ASSET_DATA.length;
+    const protectedCount = ASSET_DATA.filter(a => a.status === 'PROTECTED').length;
+    const flaggedCount = ASSET_DATA.filter(a => a.status === 'FLAGGED').length;
+    const unprotectedCount = ASSET_DATA.filter(a => a.status === 'UNPROTECTED').length;
+
+    // 2. Update the HTML counters (Ensure these IDs match your index.html)
+    const totalEl = document.getElementById('reg-total-assets');
+    const protEl = document.getElementById('reg-protected');
+    const blockEl = document.getElementById('reg-blockchain');
+    const unprotEl = document.getElementById('reg-unprotected');
+
+    if (totalEl) totalEl.textContent = total.toLocaleString();
+    if (protEl) protEl.textContent = protectedCount.toLocaleString();
+    // Assuming 95% of protected assets are anchored to blockchain for demo
+    if (blockEl) blockEl.textContent = Math.floor(protectedCount * 0.95).toLocaleString();
+    if (unprotEl) unprotEl.textContent = (unprotectedCount + flaggedCount).toLocaleString();
+
+    // 3. Keep the original rendering guard
     if (assetTableRendered) return;
     assetTableRendered = true;
     renderAssetRows(ASSET_DATA);
@@ -566,12 +649,40 @@ function renderAssetRows(data) {
             <td class="px-4 py-3 mono text-[11px] text-center" style="color:${a.detections > 10 ? 'var(--c-red)' : a.detections > 0 ? 'var(--c-orange)' : '#4a6070'}">${a.detections}</td>
             <td class="px-4 py-3 mono text-[10px] text-slate-600">${a.hash}</td>
             <td class="px-4 py-3">
-                <button onclick="showToast('<i class=\'fas fa-eye\' style=\'color:var(--c-cyan)\'></i> Viewing ${a.uid}...','info')" class="px-2 py-1 rounded mono text-[9px] transition-all" style="background:rgba(0,220,255,.08);border:1px solid rgba(0,220,255,.2);color:var(--c-cyan)">VIEW</button>
+<button onclick="viewAssetDetails('${a.uid}')" class="px-2 py-1 rounded mono text-[9px] transition-all" 
+        style="background:rgba(0,220,255,.08);border:1px solid rgba(0,220,255,.2);color:var(--c-cyan)">
+    VIEW
+</button>
             </td>`;
         tbody.appendChild(tr);
     });
     const label = document.getElementById('asset-count-label');
     if (label) label.textContent = `Showing ${data.length} of 2,847`;
+}
+
+function viewAssetDetails(uid) {
+    const asset = ASSET_DATA.find(a => a.uid === uid);
+    if (!asset) return;
+
+    // Show a detailed toast with asset info
+    showToast(`
+        <div class="flex flex-col gap-1">
+            <span style="color:var(--c-cyan); font-weight:bold;">${asset.uid} INDEX DATA</span>
+            <span class="text-[10px] text-slate-400">${asset.name}</span>
+            <span class="text-[9px] text-slate-500">Blockchain Hash: ${asset.hash}</span>
+        </div>
+    `, 'info');
+
+    // Optional: Switch to Live Patrol to "examine" it
+    appendLog('info', `Forensic inspection initiated for ${asset.uid}. Fetching blockchain records...`);
+}
+
+// Attach search listener
+const searchInput = document.querySelector('input[placeholder*="Search by UID"]');
+if (searchInput) {
+    searchInput.addEventListener('input', () => {
+        filterAssets(); // Calls your existing filter logic
+    });
 }
 
 function filterAssets() {
@@ -587,21 +698,23 @@ function filterAssets() {
 }
 
 function openRegisterModal() {
-    showToast('<i class="fas fa-fingerprint" style="color:var(--c-cyan)"></i> Register new asset — switch to Live Patrol to upload.', 'info');
+    // 1. Give the user clear feedback
+    showToast('<i class="fas fa-fingerprint"></i> Entering Registration Mode...', 'success');
+
+    // 2. Switch to Live Patrol tab
+    const livePatrolNav = document.querySelector('.nav-item[onclick*="dashboard"]');
+    if (livePatrolNav) {
+        switchTab('dashboard', livePatrolNav);
+    }
+
+    // 3. Automatically trigger the "Protect Asset" (Upload) flow after a short delay
+    setTimeout(() => {
+        triggerProtect();
+        appendLog('info', 'REGISTRATION INITIATED: Please select a master file for fingerprinting.');
+    }, 500);
 }
 
 // ── ALERT FEED PAGE ────────────────────────────────
-const AF_DATA = [
-    { id: 'ALT-0001', source: 'YouTube', assetId: 'MG-1198-X4', confidence: 98, status: 'critical', reasoning: 'Unauthorized full re-upload of protected broadcast in UK. Audio + video fingerprints match at 98.3%. DMCA §512 applicable.', icon: 'fab fa-youtube', color: '#ff0000', ts: '09:14:22' },
-    { id: 'ALT-0002', source: 'TikTok', assetId: 'MG-1105-X1', confidence: 96, status: 'critical', reasoning: 'Audio fingerprint (BeatSync v2) exact match. Speed-shifted +10% to evade hash detection. Override successful.', icon: 'fab fa-tiktok', color: '#fe2c55', ts: '09:18:05' },
-    { id: 'ALT-0003', source: 'Instagram', assetId: 'MG-0983-X2', confidence: 94, status: 'review', reasoning: 'Clip extracted from 4K master, reposted as Reel. Perceptual hash distance 0.04. No license found in rights registry.', icon: 'fab fa-instagram', color: '#e1306c', ts: '09:22:41' },
-    { id: 'ALT-0004', source: 'Twitter/X', assetId: 'MG-1042-X7', confidence: 99, status: 'critical', reasoning: 'Full clip shared virally without attribution. Geo-block bypass via VPN (Netherlands). Watermark UUID confirmed.', icon: 'fab fa-x-twitter', color: '#00dcff', ts: '09:31:09' },
-    { id: 'ALT-0005', source: 'Telegram', assetId: 'MG-1566-X3', confidence: 91, status: 'review', reasoning: 'Private channel @piracy99 distributing protected audio. 2,300 downloads. Cross-border jurisdiction RU/DE.', icon: 'fab fa-telegram', color: '#2ca5e0', ts: '09:45:18' },
-    { id: 'ALT-0006', source: 'YouTube', assetId: 'MG-1780-X9', confidence: 87, status: 'resolved', reasoning: 'Concert stream re-uploaded to unlisted channel. Takedown notice dispatched and confirmed. Removed within 3.2 hours.', icon: 'fab fa-youtube', color: '#ff0000', ts: '10:02:33' },
-    { id: 'ALT-0007', source: 'Pinterest', assetId: 'MG-0888-X5', confidence: 82, status: 'resolved', reasoning: 'High-res thumbnail stripped of EXIF watermark. Reverse image search confirms ownership. Moderate confidence — resolved.', icon: 'fab fa-pinterest', color: '#e60023', ts: '10:15:47' },
-    { id: 'ALT-0008', source: 'TikTok', assetId: 'MG-1677-X7', confidence: 93, status: 'review', reasoning: 'Interview clip re-uploaded with added overlay text. Facial and voice recognition confirms protected content.', icon: 'fab fa-tiktok', color: '#fe2c55', ts: '10:28:59' },
-];
-
 let afFilter = 'all';
 let afPlatform = '';
 
@@ -615,21 +728,37 @@ function renderAlertFeed() {
         (!afPlatform || a.source === afPlatform)
     );
 
-    // Update stat counts
-    document.getElementById('af-critical').textContent = AF_DATA.filter(a => a.status === 'critical').length;
-    document.getElementById('af-review').textContent = AF_DATA.filter(a => a.status === 'review').length;
-    document.getElementById('af-resolved').textContent = AF_DATA.filter(a => a.status === 'resolved').length;
-    document.getElementById('af-auto').textContent = AF_DATA.filter(a => a.status === 'critical').length;
+    // 1. UPDATE STAT COUNTS AT THE TOP
+    const critCount = AF_DATA.filter(a => a.status === 'critical').length;
+    const revCount = AF_DATA.filter(a => a.status === 'review').length;
+    const resCount = AF_DATA.filter(a => a.status === 'resolved').length;
+
+    if (document.getElementById('af-critical')) document.getElementById('af-critical').textContent = critCount;
+    if (document.getElementById('af-review')) document.getElementById('af-review').textContent = revCount;
+    if (document.getElementById('af-resolved')) document.getElementById('af-resolved').textContent = resCount;
+    if (document.getElementById('af-auto')) document.getElementById('af-auto').textContent = critCount;
+
+    // 2. UPDATE SIDEBAR NOTIFICATION BADGE
+    const pendingCount = critCount + revCount;
+    const badge = document.getElementById('nav-badge');
+    if (badge) {
+        badge.textContent = pendingCount;
+        badge.style.display = pendingCount > 0 ? 'flex' : 'none';
+    }
 
     list.innerHTML = '';
-    if (filtered.length === 0) { empty.classList.remove('hidden'); return; }
-    empty.classList.add('hidden');
+    if (filtered.length === 0) {
+        if (empty) empty.classList.remove('hidden');
+        return;
+    }
+    if (empty) empty.classList.add('hidden');
 
     filtered.forEach(a => {
         const statusClass = a.status === 'resolved' ? 'status-resolved' : a.status === 'review' ? 'status-review' : '';
         const statusLabel = a.status === 'critical' ? `<span class="chip" style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">CRITICAL</span>` :
             a.status === 'review' ? `<span class="chip" style="background:rgba(255,140,0,.12);color:var(--c-orange);border:1px solid rgba(255,140,0,.3)">PENDING REVIEW</span>` :
                 `<span class="chip" style="background:rgba(0,255,136,.1);color:var(--c-green);border:1px solid rgba(0,255,136,.3)">RESOLVED</span>`;
+
         const card = document.createElement('div');
         card.className = `af-row-card panel p-4 ${statusClass}`;
         card.onclick = () => openModal(a.id);
@@ -658,12 +787,17 @@ function renderAlertFeed() {
                 </div>
             </div>`;
         list.appendChild(card);
-
-        // Register in STATE.alerts for modal reuse
-        if (!STATE.alerts.find(x => x.id === a.id)) {
-            STATE.alerts.push({ id: a.id, source: a.source, id2: a.assetId, confidence: a.confidence, reasoning: a.reasoning, icon: a.icon, color: a.color });
-        }
     });
+}
+
+function resolveAlert(id) {
+    const a = AF_DATA.find(x => x.id === id);
+    if (a) {
+        a.status = 'resolved';
+        renderAlertFeed(); // Update the UI immediately
+        showToast(`<i class="fas fa-gavel" style="color:var(--c-cyan)"></i> Case ${id} resolved. Action recorded.`, 'success');
+        appendLog('ok', `Human Review: Infringement ${id} verified and resolved.`);
+    }
 }
 
 function setAlertFilter(f, btn) {
@@ -690,6 +824,39 @@ function resolveAlert(id) {
     showToast(`<i class="fas fa-gavel" style="color:var(--c-cyan)"></i> ${id} opened for review.`, 'info');
 }
 
+// ── Unified Workspace Logic ────────────────────────
+
+function enterWorkstationMode() {
+    // 1. Hide the Map row (Simple view elements)
+    const heroRow = document.getElementById('hero-row');
+    if (heroRow) heroRow.classList.add('hidden');
+
+    // 2. Show the Protection Module (Detailed view elements)
+    const detailSections = document.getElementById('detail-sections');
+    if (detailSections) {
+        detailSections.classList.remove('hidden-details');
+        detailSections.classList.remove('hidden'); // Ensure it's visible
+    }
+
+    // 3. Keep the AI Engine Panel visible
+    const enginePanel = document.getElementById('ai-engine-panel');
+    if (enginePanel) {
+        // We move the engine panel if needed, or keep it in the grid
+        enginePanel.classList.remove('hidden');
+    }
+
+    // 4. Update Header Subtitle to reflect the mode change
+    document.getElementById('page-subtitle').textContent = "FORENSIC WORKSTATION · ACTIVE ASSET PROTECTION";
+}
+
+// UPDATE THIS FUNCTION:
+function triggerProtect() {
+    // First, switch the UI to the Workstation view
+    enterWorkstationMode();
+
+    // Then, trigger the file selection
+    document.getElementById('file-input').click();
+}
 // ── FULL THREAT MAP ────────────────────────────────
 let fullLeafletMap = null;
 
@@ -721,33 +888,18 @@ function initFullMap() {
 }
 
 function addFullMapPing(lat, lng, type, city) {
-    if (!fullLeafletMap) return;
-    const COLORS = { threat: '#ff2d2d', suspect: '#ff8c00', safe: '#00ff88' };
-    const CLASSES = { threat: 'red', suspect: 'orange', safe: 'green' };
-    const color = COLORS[type] || COLORS.threat;
-    const cls = CLASSES[type] || 'red';
-    const icon = L.divIcon({ className: '', html: `<div class="threat-marker-dot ${cls}" style="width:10px;height:10px"></div>`, iconSize: [10, 10], iconAnchor: [5, 5] });
-    const marker = L.marker([lat, lng], { icon }).addTo(fullLeafletMap);
-    const ripple = L.circle([lat, lng], { radius: 350000, color, fillColor: color, fillOpacity: .05, weight: 1, opacity: .4 }).addTo(fullLeafletMap);
-    setTimeout(() => { try { fullLeafletMap.removeLayer(marker); fullLeafletMap.removeLayer(ripple); } catch (e) { } }, 8000);
-
-    // Add to event log
     const log = document.getElementById('map-event-log');
-    if (log) {
-        const ts = new Date().toTimeString().slice(0, 8);
-        const row = document.createElement('div');
-        const labelMap = { threat: 'INFRINGEMENT', suspect: 'SUSPECTED', safe: 'VERIFIED' };
-        row.style.cssText = `color:${color};padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)`;
-        row.innerHTML = `<span style="color:#2a6070">[${ts}]</span> ${labelMap[type] || 'EVENT'} — ${city || `${lat.toFixed(1)},${lng.toFixed(1)}`}`;
-        log.prepend(row);
-        while (log.children.length > 30) log.removeChild(log.lastChild);
-    }
-    // Ticker
-    const ticker = document.getElementById('map-ticker');
-    if (ticker && (type === 'threat' || type === 'suspect')) {
-        ticker.textContent = `${type === 'threat' ? '⚠ INFRINGEMENT' : '~ SUSPECTED'} detected — ${city || 'Unknown region'} @ ${new Date().toTimeString().slice(0, 8)}`;
-        ticker.style.color = color;
-    }
+    if (!log) return;
+
+    const ts = new Date().toTimeString().slice(0, 8);
+    const row = document.createElement('div');
+    const color = type === 'threat' ? '#ff2d2d' : '#00ff88';
+
+    row.style.cssText = `color:${color}; font-size:10px; font-family:monospace; margin-bottom:4px;`;
+    row.innerHTML = `[${ts}] ${type.toUpperCase()} - ${city}`;
+
+    log.prepend(row);
+    if (log.children.length > 10) log.removeChild(log.lastChild);
 }
 
 function renderMapAnalytics() {
@@ -789,54 +941,77 @@ function renderMapAnalytics() {
 // ── INTEL REPORT ──────────────────────────────────
 let reportRendered = false;
 function renderReport() {
-    if (reportRendered) return;
-    reportRendered = true;
+    // We remove the "if (reportRendered) return;" so that the 
+    // report updates every time you click the tab to show new takedowns.
 
-    // Monthly trend
-    const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-    const detected = [820, 940, 1100, 990, 1350, 1420, 1280, 1510];
-    const resolved = [780, 900, 1050, 970, 1300, 1380, 1240, 1480];
+    // 1. UPDATE KPI NUMBERS (Add these IDs to your HTML panels if they aren't there)
+    const takedownKPI = document.getElementById('total-takedowns-kpi');
+    if (takedownKPI) {
+        // Base historical number + your real-time alerts
+        takedownKPI.textContent = (14882 + STATE.alertCount).toLocaleString();
+    }
+
+    // 2. MONTHLY TREND (Syncing the last bar with your live data)
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'];
+
+    // Historical data for past months
+    const detected = [1100, 990, 1350, 1420, 1280, 1510];
+    const resolved = [1050, 970, 1300, 1380, 1240, 1480];
+
+    // Push the REAL-TIME data for the current month (April)
+    // We multiply alertCount by a factor (e.g., 5) to make the bar look significant
+    detected.push(1300 + (STATE.alertCount * 5));
+    resolved.push(1250 + (STATE.alertCount * 5));
+
     const maxVal = Math.max(...detected);
     const chart = document.getElementById('trend-chart');
     const labels = document.getElementById('trend-labels');
+
     if (chart) {
         chart.innerHTML = months.map((m, i) => `
-            <div class="trend-bar-wrap">
-                <div style="flex:1;display:flex;align-items:flex-end;gap:2px;width:100%">
-                    <div class="trend-bar-inner" style="flex:1;background:rgba(255,45,45,.5);height:${(detected[i] / maxVal * 100).toFixed(0)}%"></div>
-                    <div class="trend-bar-inner" style="flex:1;background:rgba(0,255,136,.5);height:${(resolved[i] / maxVal * 100).toFixed(0)}%"></div>
+            <div class="trend-bar-wrap" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%;">
+                <div style="display:flex; align-items:flex-end; gap:2px; height:100%; width:80%;">
+                    <div class="trend-bar-inner" title="Detected: ${detected[i]}" 
+                         style="flex:1; background:rgba(255,45,45,.5); height:${(detected[i] / maxVal * 100).toFixed(0)}%; border-radius:2px 2px 0 0;"></div>
+                    <div class="trend-bar-inner" title="Resolved: ${resolved[i]}" 
+                         style="flex:1; background:rgba(0,255,136,.5); height:${(resolved[i] / maxVal * 100).toFixed(0)}%; border-radius:2px 2px 0 0;"></div>
                 </div>
             </div>`).join('');
     }
-    if (labels) labels.innerHTML = months.map(m => `<div style="flex:1;text-align:center">${m}</div>`).join('');
+    if (labels) labels.innerHTML = months.map(m => `<div style="flex:1; text-align:center">${m}</div>`).join('');
 
-    // Platform split
-    const splits = [
-        { name: 'YouTube', pct: 34, icon: 'fab fa-youtube', color: '#ff0000' },
-        { name: 'TikTok', pct: 22, icon: 'fab fa-tiktok', color: '#fe2c55' },
-        { name: 'Telegram', pct: 18, icon: 'fab fa-telegram', color: '#2ca5e0' },
-        { name: 'Instagram', pct: 14, icon: 'fab fa-instagram', color: '#e1306c' },
-        { name: 'Pinterest', pct: 6, icon: 'fab fa-pinterest', color: '#e60023' },
-        { name: 'Other', pct: 6, icon: 'fas fa-globe', color: '#607080' },
-    ];
+    // 3. PLATFORM SPLIT (Kept largely hardcoded but polished)
+
+    // Replace the old line with this filtered version:
+    const activeSplits = SYSTEM_CONFIG.platforms.filter(p => p.active);
+
     const pEl = document.getElementById('report-platform-split');
-    if (pEl) pEl.innerHTML = splits.map(p => `
-        <div class="flex items-center gap-2">
+    if (pEl) {
+        pEl.innerHTML = activeSplits.map(p => `
+        <div class="flex items-center gap-2 mb-3">
             <i class="${p.icon} w-4 text-center text-[11px]" style="color:${p.color}"></i>
             <span class="mono text-[10px] text-slate-400 flex-1">${p.name}</span>
-            <div class="w-24 h-2 rounded-full" style="background:rgba(255,255,255,.06)">
-                <div class="h-full rounded-full" style="width:${p.pct}%;background:${p.color};box-shadow:0 0 5px ${p.color}60"></div>
+            <div class="w-24 h-1.5 rounded-full" style="background:rgba(255,255,255,.06)">
+                <div class="h-full rounded-full transition-all duration-500" 
+                     style="width:${p.share}%; background:${p.color}; box-shadow:0 0 8px ${p.color}44"></div>
             </div>
-            <span class="mono text-[10px] font-bold" style="color:${p.color}">${p.pct}%</span>
+            <span class="mono text-[10px] font-bold" style="color:${p.color}">${p.share}%</span>
         </div>`).join('');
+    }
 
-    // Top offenders
+    // 4. TOP OFFENDERS & GEO HOTSPOTS (Left as hardcoded "props" for the demo)
+    renderOffenders();
+    renderGeoHotspots();
+}
+
+// Helper functions to keep the main renderReport clean
+function renderOffenders() {
     const offenders = [
         { handle: '@piratestream99', platform: 'Telegram', violations: 47, status: 'BANNED' },
-        { handle: 'FullMovies4Free', platform: 'YouTube', violations: 34, status: 'BANNED' },
-        { handle: '@leakmaster', platform: 'Twitter/X', violations: 28, status: 'ACTIVE' },
-        { handle: 'StreamStealer_HK', platform: 'TikTok', violations: 21, status: 'ACTIVE' },
-        { handle: 'FreeShowsNow', platform: 'Instagram', violations: 17, status: 'DMCA' },
+        { handle: 'LiveSports_HQ', platform: 'YouTube', violations: 34, status: 'BANNED' },
+        { handle: '@leaks_prime', platform: 'Twitter/X', violations: 28, status: 'ACTIVE' },
+        { handle: 'GoalReplay_Redux', platform: 'TikTok', violations: 21, status: 'ACTIVE' },
+        { handle: 'MatchDay_Live', platform: 'Instagram', violations: 17, status: 'DMCA' },
     ];
     const oEl = document.getElementById('offenders-table');
     if (oEl) oEl.innerHTML = offenders.map(o => {
@@ -848,8 +1023,9 @@ function renderReport() {
             <td class="py-2.5 text-right"><span class="chip" style="background:${sc}22;color:${sc};border:1px solid ${sc}44">${o.status}</span></td>
         </tr>`;
     }).join('');
+}
 
-    // Geo hotspots
+function renderGeoHotspots() {
     const geo = [
         { region: 'Eastern Europe', pct: 31, flag: '🇷🇺' },
         { region: 'South-East Asia', pct: 24, flag: '🇨🇳' },
@@ -859,10 +1035,10 @@ function renderReport() {
     ];
     const gEl = document.getElementById('geo-hotspots');
     if (gEl) gEl.innerHTML = geo.map(g => `
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 mb-2">
             <span class="text-base">${g.flag}</span>
             <span class="mono text-[10px] text-slate-400 flex-1">${g.region}</span>
-            <div class="w-28 h-2 rounded-full" style="background:rgba(255,255,255,.06)">
+            <div class="w-28 h-1.5 rounded-full" style="background:rgba(255,255,255,.06)">
                 <div class="h-full rounded-full" style="width:${g.pct}%;background:var(--c-orange);box-shadow:0 0 5px rgba(255,140,0,.4)"></div>
             </div>
             <span class="mono text-[9px]" style="color:var(--c-orange)">${g.pct}%</span>
@@ -872,32 +1048,49 @@ function renderReport() {
 // ── SETTINGS ──────────────────────────────────────
 let settingsRendered = false;
 function renderSettings() {
-    if (settingsRendered) return;
-    settingsRendered = true;
-    const platforms = [
-        { name: 'YouTube', icon: 'fab fa-youtube', color: '#ff0000', active: true },
-        { name: 'Instagram', icon: 'fab fa-instagram', color: '#e1306c', active: true },
-        { name: 'Twitter/X', icon: 'fab fa-x-twitter', color: '#00dcff', active: true },
-        { name: 'TikTok', icon: 'fab fa-tiktok', color: '#fe2c55', active: true },
-        { name: 'Telegram', icon: 'fab fa-telegram', color: '#2ca5e0', active: true },
-        { name: 'Pinterest', icon: 'fab fa-pinterest', color: '#e60023', active: false },
-        { name: 'Dailymotion', icon: 'fas fa-play-circle', color: '#0066dc', active: false },
-        { name: 'Vimeo', icon: 'fab fa-vimeo-v', color: '#1ab7ea', active: false },
-    ];
+    // Note: We removed the 'rendered' guard so it refreshes if we want, 
+    // but the shared config keeps the state consistent.
     const pEl = document.getElementById('platform-toggles');
     if (!pEl) return;
-    pEl.innerHTML = platforms.map(p => `
+
+    pEl.innerHTML = SYSTEM_CONFIG.platforms.map(p => `
         <div class="flex items-center justify-between py-2" style="border-bottom:1px solid var(--c-border)">
             <div class="flex items-center gap-3">
                 <i class="${p.icon} w-5 text-center" style="color:${p.color}"></i>
                 <span class="mono text-[11px] text-white">${p.name}</span>
-                ${p.active ? '<span class="chip" style="background:rgba(0,255,136,.08);color:var(--c-green);border:1px solid rgba(0,255,136,.2)">ACTIVE</span>' : ''}
+                ${p.active ? '<span class="chip status-active-chip" style="background:rgba(0,255,136,.08);color:var(--c-green);border:1px solid rgba(0,255,136,.2)">ACTIVE</span>' : ''}
             </div>
             <label class="settings-toggle">
-                <input type="checkbox" ${p.active ? 'checked' : ''} onchange="showToast('<i class=\'${p.icon.replace(/'/g, '')}\'></i> ${p.name} monitoring ${p.active ? 'disabled' : 'enabled'}.','info')">
+                <input type="checkbox" ${p.active ? 'checked' : ''} onchange="handleTogglePlatform('${p.id}', this)">
                 <span class="toggle-track"></span>
             </label>
         </div>`).join('');
+}
+
+function handleTogglePlatform(platformId, el) {
+    const isActive = el.checked;
+    const platform = SYSTEM_CONFIG.platforms.find(p => p.id === platformId);
+
+    if (platform) {
+        platform.active = isActive;
+
+        // 1. Show the Toast Notification
+        showToast(`<i class="${platform.icon}"></i> ${platform.name} monitoring ${isActive ? 'enabled' : 'disabled'}`, isActive ? 'success' : 'info');
+
+        // 2. Update the "ACTIVE" chip in the Settings UI
+        const parent = el.closest('.flex');
+        const labelContainer = parent.querySelector('.flex.items-center.gap-3');
+        let chip = labelContainer.querySelector('.status-active-chip');
+
+        if (isActive && !chip) {
+            labelContainer.insertAdjacentHTML('beforeend', `<span class="chip status-active-chip" style="background:rgba(0,255,136,.08);color:var(--c-green);border:1px solid rgba(0,255,136,.2)">ACTIVE</span>`);
+        } else if (!isActive && chip) {
+            chip.remove();
+        }
+
+        // 3. IMMEDIATELY sync the Intel Report (even if the tab isn't open)
+        renderReport();
+    }
 }
 
 function toggleAgent(name, el) {
@@ -951,6 +1144,9 @@ window.onload = () => {
         const d = PLATFORM_DATA[Math.floor(Math.random() * PLATFORM_DATA.length)];
         addAlertToFeed({ ...d, confidence: Math.floor(85 + Math.random() * 15) });
     }, 18000);
+    startReasoningStream();
+    renderSettings();
+    renderAlertFeed();
 
     // Initial toast
     setTimeout(() => showToast('<i class="fas fa-satellite-dish" style="color:var(--c-cyan)"></i> Security protocols initialized. Live patrol active.', 'success'), 800);
