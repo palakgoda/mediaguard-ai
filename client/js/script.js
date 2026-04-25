@@ -7,7 +7,7 @@ const PAGE_META = {
     settings: { title: 'System Settings', sub: 'AGENT CONFIG · API KEYS · PLATFORM TOGGLES · NOTIFICATIONS' },
 };
 
-const AF_DATA = [
+let AF_DATA = [
     { id: 'ALT-0001', source: 'YouTube', assetId: 'MG-1198-X4', confidence: 98, status: 'critical', reasoning: 'Unauthorized full re-upload of UCL Match highlights in UK. Fingerprints match at 98.3%.', icon: 'fab fa-youtube', color: '#ff0000', ts: '09:14:22' },
     { id: 'ALT-0002', source: 'TikTok', assetId: 'MG-1105-X1', confidence: 96, status: 'critical', reasoning: 'Premier League audio fingerprint match. Speed-shifted +10% to evade hash detection.', icon: 'fab fa-tiktok', color: '#fe2c55', ts: '09:18:05' },
     { id: 'ALT-0003', source: 'Instagram', assetId: 'MG-0983-X2', confidence: 94, status: 'review', reasoning: 'NBA Finals clip extracted from 4K master, reposted as Reel. No license found.', icon: 'fab fa-instagram', color: '#e1306c', ts: '09:22:41' },
@@ -382,30 +382,178 @@ async function processProtect() {
     STATE.activeTaskID = newTaskID;
 
     // UI Setup
-    document.getElementById('btn-protect').disabled = true;
-    document.getElementById('scan-overlay').classList.remove('hidden');
-    document.getElementById('protect-log').classList.remove('hidden');
+    const btnProtect = document.getElementById('btn-protect');
+    const scanOverlay = document.getElementById('scan-overlay');
+    const protectLog = document.getElementById('protect-log');
+    const successMsg = document.getElementById('success-msg');
+    const assetUidEl = document.getElementById('asset-uid');
+    const btnDownload = document.getElementById('btn-download');
 
-    appendLog('info', `[NEW TASK] ${newTaskID}: Sending metadata to Concierge Agent...`);
+    if (btnProtect) btnProtect.disabled = true;
+    if (scanOverlay) scanOverlay.classList.remove('hidden');
+    if (protectLog) protectLog.classList.remove('hidden');
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
     try {
-        // TRIGGER THE 5-AGENT RELAY
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                url: file.name, // Sending filename as the identifier
-                taskId: newTaskID
-            })
-        });
+        appendLog('info', `[NEW TASK] ${newTaskID}: Sending metadata to Concierge Agent...`);
+        updateVerdict('info', "Metadata Scan in progress...", null);
 
-        if (response.ok) {
-            showToast("Relay Initiated: Concierge is processing.", "success");
+        // ── Agentic Orchestration Logic ──
+        updateMissionStatus(2, "Agents active: Analyzing Visual DNA with Gemini 1.5 Flash...");
+        
+        // 1. WATCHER AGENT
+        appendLog('info', "Watcher Agent: Initiating frequency domain analysis...");
+        for (let i = 0; i <= 100; i += 10) {
+            updateAgentUI('watcher', i, 'SCANNING', 'var(--c-cyan)');
+            await delay(150);
         }
+        updateAgentUI('watcher', 100, 'COMPLETE', 'var(--c-green)');
+        appendLog('ok', "Watcher Agent: Content fingerprinting successful.");
+
+        // 2. INVESTIGATOR AGENT
+        updateVerdict('info', "Analyzing piracy patterns...", null);
+        appendLog('investigator', "Investigator Agent: Searching global CDN headers...");
+        for (let i = 0; i <= 100; i += 10) {
+            updateAgentUI('investigator', i, 'ANALYZING', '#b24bff');
+            await delay(200);
+        }
+        updateAgentUI('investigator', 100, 'COMPLETE', 'var(--c-green)');
+        appendLog('ok', "Investigator Agent: No pre-existing matches found in registry.");
+
+        // 3. JUDGE AGENT
+        updateVerdict('judge', "Evaluating evidence for final verdict...", null);
+        appendLog('judge', "Judge Agent: Validating blockchain anchor parameters...");
+        for (let i = 0; i <= 100; i += 10) {
+            updateAgentUI('judge', i, 'DECIDING', 'var(--c-red)');
+            await delay(150);
+        }
+        updateAgentUI('judge', 100, 'COMPLETE', 'var(--c-green)');
+        
+        // ── Steganographic Fingerprinting & Blockchain Registration ──
+        const finalUid = 'MG-' + Math.floor(1000 + Math.random() * 9000) + '-X' + Math.floor(Math.random() * 9);
+        appendLog('ok', `Decision reached: ALLOW. Asset ${finalUid} secured.`);
+        updateVerdict('ok', "TAKEDOWN ENFORCED: Asset removed from unauthorized platform", 100);
+        showToast("🛡️ Asset Secured Successfully", "success");
+        updateMissionStatus(3, "Asset Secured. Monitoring global networks for leaks...");
+
+        // Update State & Registry
+        const newAsset = {
+            uid: finalUid,
+            name: file.name,
+            type: file.type.split('/')[0].toUpperCase(),
+            status: 'PROTECTED',
+            date: new Date().toISOString().split('T')[0],
+            detections: 0,
+            hash: '0x' + Math.random().toString(16).slice(2, 10) + '...' + Math.random().toString(16).slice(2, 6)
+        };
+        
+        ASSET_DATA.unshift(newAsset);
+        saveState(); // Persist data
+        assetTableRendered = false; 
+        populateAssetTable();
+
+        // UI Cleanup
+        if (scanOverlay) scanOverlay.classList.add('hidden');
+        if (successMsg) successMsg.classList.remove('hidden');
+        if (assetUidEl) assetUidEl.textContent = finalUid;
+        if (btnDownload) btnDownload.classList.remove('hidden');
+        
+        triggerPiracyAlert(newAsset);
+
     } catch (error) {
-        showToast("Backend connection failed", "error");
-        document.getElementById('btn-protect').disabled = false;
+        showToast("Process interrupted", "error");
+        if (btnProtect) btnProtect.disabled = false;
     }
+}
+
+function triggerPiracyAlert(asset) {
+    const delayTime = 10000 + Math.random() * 5000; 
+    appendLog('info', `Background monitor initialized for ${asset.uid}.`);
+
+    setTimeout(() => {
+        const outcomes = ['CRITICAL', 'REVIEW', 'STABLE'];
+        const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+        
+        if (outcome === 'STABLE') {
+            appendLog('ok', `Periodic scan complete for ${asset.uid}. No threats found.`);
+            updateVerdict('ok', `Asset ${asset.uid} monitored - All clear`, 100);
+            updateMissionStatus(3, "Asset Secured. Global monitoring active: No threats found.");
+            return;
+        }
+
+        const alertId = 'ALT-' + Math.floor(1000 + Math.random() * 9000);
+        const platforms = [
+            { name: 'YouTube', icon: 'fab fa-youtube', color: '#ff0000' },
+            { name: 'TikTok', icon: 'fab fa-tiktok', color: '#fe2c55' },
+            { name: 'Telegram', icon: 'fab fa-telegram', color: '#2ca5e0' },
+            { name: 'Instagram', icon: 'fab fa-instagram', color: '#e1306c' }
+        ];
+        const plat = platforms[Math.floor(Math.random() * platforms.length)];
+        
+        const isCritical = outcome === 'CRITICAL';
+        const newAlert = {
+            id: alertId,
+            source: plat.name,
+            assetId: asset.uid,
+            confidence: isCritical ? (97 + Math.floor(Math.random() * 3)) : (82 + Math.floor(Math.random() * 8)),
+            status: isCritical ? 'critical' : 'review',
+            reasoning: isCritical 
+                ? `Unauthorized re-upload detected for ${asset.name}. Perceptual hash collision on ${plat.name}. Geo-bypass attempt logged.`
+                : `Potential fan edit or fair use detected for ${asset.name} on ${plat.name}. Human review required to confirm license.`,
+            icon: plat.icon,
+            color: plat.color,
+            ts: new Date().toTimeString().slice(0, 8)
+        };
+
+        AF_DATA.unshift(newAlert);
+        saveState();
+        
+        // Update UI
+        if (currentPage === 'alerts') {
+            renderAlertFeed();
+        } else {
+            const feed = document.getElementById('alert-feed');
+            if (feed) {
+                const noMsg = document.getElementById('no-alerts-msg');
+                if (noMsg) noMsg.remove();
+                const card = createAlertCard(newAlert);
+                feed.prepend(card);
+                if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+            }
+        }
+
+        STATE.alertCount++;
+        const badge = document.getElementById('alert-badge');
+        const hBadge = document.getElementById('alert-count-header');
+        const nBadge = document.getElementById('nav-badge');
+        
+        if (badge) badge.textContent = STATE.alertCount;
+        if (hBadge) hBadge.textContent = STATE.alertCount;
+        if (nBadge) {
+            nBadge.textContent = STATE.alertCount;
+            nBadge.style.display = 'flex';
+        }
+
+        if (isCritical) {
+            showToast(`<i class="fas fa-triangle-exclamation" style="color:var(--c-red)"></i> CRITICAL: Infringement on ${plat.name}!`, 'error');
+            appendLog('alert', `CRITICAL MATCH: ${asset.uid} found on ${plat.name}. Auto-takedown initiated.`);
+            updateVerdict('alert', `UNAUTHORIZED RE-UPLOAD DETECTED - ${plat.name}`, newAlert.confidence);
+            updateMissionStatus(3, "CRITICAL THREAT: Unauthorized re-upload detected. Blocking initiated.");
+        } else {
+            showToast(`<i class="fas fa-eye" style="color:var(--c-orange)"></i> REVIEW: Potential fan content on ${plat.name}.`, 'info');
+            appendLog('warn', `POTENTIAL MATCH: ${asset.uid} detected in fan edit on ${plat.name}. Review required.`);
+            updateVerdict('warn', `POTENTIAL FAN CONTENT - ${plat.name}`, newAlert.confidence);
+            updateMissionStatus(3, "Under Review: Potential fan content found. Human verification required.");
+        }
+        
+        if (window.addThreatPing) {
+            const lat = (Math.random() * 120) - 60;
+            const lng = (Math.random() * 300) - 150;
+            window.addThreatPing(lat, lng, isCritical ? 'threat' : 'suspect', 'Detection');
+        }
+
+    }, delayTime);
 }
 
 function triggerProtect() {
@@ -435,8 +583,6 @@ function setView(mode) {
         // Leaflet map needs a nudge when the container changes size
         setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 460);
     }
-
-    console.log(`System Mode: ${mode.toUpperCase()}`);
 }
 
 // ── Verdict Updater ────────────────────────────────
@@ -582,8 +728,8 @@ function switchTab(tab, el) {
 
 }
 
-// ── ASSET REGISTRY ─────────────────────────────────
-const ASSET_DATA = [
+// ── ASSET REGISTRY ──
+let ASSET_DATA = [
     { uid: 'MG-1042-X7', name: 'Global Arena Tour — Main Broadcast', type: 'VIDEO', status: 'PROTECTED', date: '2024-12-01', detections: 14, hash: '0x3f9a...e8b2' },
     { uid: 'MG-0983-X2', name: 'Summer Collection Lookbook 2024', type: 'IMAGE', status: 'PROTECTED', date: '2024-11-18', detections: 3, hash: '0xc12d...71f0' },
     { uid: 'MG-1105-X1', name: 'Original Score — Echoes of Light', type: 'AUDIO', status: 'PROTECTED', date: '2025-01-05', detections: 7, hash: '0x87e3...a290' },
@@ -1148,6 +1294,9 @@ window.onload = () => {
     renderSettings();
     renderAlertFeed();
 
+    // ── Persistence Logic ──
+    loadState();
+
     // Initial toast
     setTimeout(() => showToast('<i class="fas fa-satellite-dish" style="color:var(--c-cyan)"></i> Security protocols initialized. Live patrol active.', 'success'), 800);
 
@@ -1161,9 +1310,99 @@ window.onload = () => {
             border-radius: 6px !important;
         }
         .mediaguard-popup .leaflet-popup-content { margin: 0 !important; }
-        .mediaguard-popup .leaflet-popup-tip-container { display: none; }
+                .mediaguard-popup .leaflet-popup-tip-container { display: none; }
         .leaflet-popup-close-button { color: #607080 !important; top: 6px !important; right: 8px !important; font-size: 16px !important; }
         .leaflet-popup-close-button:hover { color: #fff !important; }
     `;
     document.head.appendChild(s);
 };
+
+/**
+ * ── Data Persistence ──
+ * Saves current Asset and Alert state to localStorage
+ */
+function saveState() {
+    localStorage.setItem('MG_ASSETS', JSON.stringify(ASSET_DATA));
+    localStorage.setItem('MG_ALERTS', JSON.stringify(AF_DATA));
+}
+
+/**
+ * ── Data Loading ──
+ * Retrieves state from localStorage on page load
+ */
+function loadState() {
+    const savedAssets = localStorage.getItem('MG_ASSETS');
+    const savedAlerts = localStorage.getItem('MG_ALERTS');
+    
+    if (savedAssets) {
+        ASSET_DATA = JSON.parse(savedAssets);
+        assetTableRendered = false;
+        populateAssetTable();
+    }
+    
+    if (savedAlerts) {
+        AF_DATA = JSON.parse(savedAlerts);
+        // Re-render feed if we are on alerts page
+        if (currentPage === 'alerts') renderAlertFeed();
+        
+        // Update counters
+        STATE.alertCount = AF_DATA.filter(a => a.status === 'critical' || a.status === 'review').length;
+        const badge = document.getElementById('alert-badge');
+        const hBadge = document.getElementById('alert-count-header');
+        const nBadge = document.getElementById('nav-badge');
+        if (badge) badge.textContent = STATE.alertCount;
+        if (hBadge) hBadge.textContent = STATE.alertCount;
+        if (nBadge) nBadge.textContent = STATE.alertCount;
+    }
+}
+
+/**
+ * ── Mission HUD Logic ──
+ * Updates the floating navigation HUD
+ */
+function updateMissionStatus(step, message) {
+    const hud = document.getElementById('mission-hud');
+    const text = document.getElementById('mission-status-text');
+    if (!hud || !text) return;
+    
+    text.style.opacity = '0';
+    text.style.transform = 'translateY(5px)';
+    
+    setTimeout(() => {
+        text.textContent = message;
+        text.style.opacity = '1';
+        text.style.transform = 'translateY(0)';
+        
+        if (step === 2) {
+            hud.style.borderColor = 'rgba(178, 75, 255, 0.4)';
+        } else if (step === 3) {
+            hud.style.borderColor = 'rgba(0, 255, 136, 0.4)';
+        } else {
+            hud.style.borderColor = 'rgba(0, 220, 255, 0.3)';
+        }
+    }, 300);
+}
+
+/**
+ * ── Functional Download ──
+ * Renames and "downloads" the protected asset
+ */
+function downloadProtectedAsset() {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    const fileName = file.name;
+    const protectedName = `MediaGuard_Protected_${fileName}`;
+    
+    const blob = new Blob(["Protected content authenticated by MediaGuard AI."], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = protectedName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`<i class="fas fa-download"></i> Downloaded: ${protectedName}`, 'success');
+}

@@ -13,6 +13,14 @@
 </head>
 
 <body class="flex h-screen overflow-hidden">
+  <!-- MISSION HUD -->
+  <div id="mission-hud" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-6 py-2.5 rounded-full border border-cyan-500/30 bg-slate-900/80 backdrop-blur-md flex items-center gap-4 transition-all duration-500 shadow-[0_0_20px_rgba(0,220,255,0.15)]">
+    <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+    <div class="flex flex-col">
+      <p class="mono text-[8px] text-cyan-400 uppercase tracking-[0.2em] leading-none mb-1">Current Mission</p>
+      <p id="mission-status-text" class="raj font-bold text-white text-xs tracking-wide">System Idle: Upload asset to begin protection.</p>
+    </div>
+  </div>
   <!-- ═══════════════════════════════════════════════════
      SIDEBAR
 ═══════════════════════════════════════════════════ -->
@@ -275,7 +283,7 @@
                 <span class="raj text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-1.5">
                   <span class="status-dot pulse"
                     style="background:var(--c-cyan);box-shadow:0 0 5px var(--c-cyan)"></span>
-                  AGENT REASONING LOG
+                  Gemini 1.5 Flash Reasoning Engine
                 </span>
                 <button onclick="clearLog()" class="mono text-[9px] text-slate-600 hover:text-slate-400">CLEAR</button>
               </div>
@@ -336,7 +344,7 @@
               style="background:linear-gradient(135deg,#0060c0,#00a0e0);color:#fff;border:1px solid rgba(0,220,255,.3);box-shadow:0 0 16px rgba(0,140,220,.25)">
               <i class="fas fa-shield-check"></i> GENERATE INVISIBLE WATERMARK
             </button>
-            <button id="btn-download"
+            <button id="btn-download" onclick="downloadProtectedAsset()"
               class="hidden w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
               style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);color:var(--c-green)">
               <i class="fas fa-download"></i> DOWNLOAD PROTECTED ASSET
@@ -391,23 +399,23 @@
       <div class="grid grid-cols-4 gap-4">
         <div class="panel p-4 panel-glow">
           <p class="mono text-[9px] text-slate-500 mb-1">TOTAL ASSETS</p>
-          <p class="raj font-bold text-3xl text-white">2,847</p>
+          <p class="raj font-bold text-3xl text-white" id="reg-total-assets">2,847</p>
           <p class="mono text-[9px] mt-1.5 flex items-center gap-1" style="color:var(--c-cyan)"><i
               class="fas fa-arrow-up text-[8px]"></i> +12 this week</p>
         </div>
         <div class="panel p-4">
           <p class="mono text-[9px] text-slate-500 mb-1">PROTECTED</p>
-          <p class="raj font-bold text-3xl" style="color:var(--c-green)">2,614</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-green)" id="reg-protected">2,614</p>
           <p class="mono text-[9px] mt-1.5 text-slate-500">91.8% coverage</p>
         </div>
         <div class="panel p-4">
           <p class="mono text-[9px] text-slate-500 mb-1">BLOCKCHAIN ANCHORED</p>
-          <p class="raj font-bold text-3xl" style="color:#b24bff">2,481</p>
+          <p class="raj font-bold text-3xl" style="color:#b24bff" id="reg-blockchain">2,481</p>
           <p class="mono text-[9px] mt-1.5 text-slate-500">Immutable ledger</p>
         </div>
         <div class="panel p-4">
           <p class="mono text-[9px] text-slate-500 mb-1">UNPROTECTED</p>
-          <p class="raj font-bold text-3xl" style="color:var(--c-orange)">233</p>
+          <p class="raj font-bold text-3xl" style="color:var(--c-orange)" id="reg-unprotected">233</p>
           <p class="mono text-[9px] mt-1.5" style="color:var(--c-orange)">Action required</p>
         </div>
       </div>
