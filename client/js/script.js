@@ -1261,6 +1261,9 @@ function updateMetrics() {
 
 // ── Init ───────────────────────────────────────────
 window.onload = () => {
+    // Cloud-Native Status Check
+    console.log("%c MediaShield AI Cloud-Native Instance Initialized ", "background: #00dcff; color: #040812; font-weight: bold; padding: 4px; border-radius: 4px;");
+    
     document.getElementById('active-task-id').textContent = STATE.activeTaskID;
 
     // Init view mode — Simple is the default
