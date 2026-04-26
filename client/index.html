@@ -89,11 +89,18 @@
   <!-- ═══════════════════════════════════════════════════
      MAIN
 ═══════════════════════════════════════════════════ -->
+  <!-- SIDEBAR OVERLAY for mobile -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
   <main class="flex-1 flex flex-col h-screen overflow-hidden">
 
     <!-- TOP BAR -->
     <header class="flex items-center justify-between px-6 py-3 flex-shrink-0"
       style="border-bottom:1px solid var(--c-border);background:rgba(4,8,18,.8);backdrop-filter:blur(8px)">
+      <!-- Hamburger (mobile only) -->
+      <button id="hamburger-btn" onclick="toggleSidebar()" class="hamburger-btn">
+        <i class="fas fa-bars"></i>
+      </button>
       <div>
         <h1 class="raj font-bold text-white text-lg leading-none" id="page-title">Digital Content Integrity Network</h1>
         <p class="mono text-[10px] text-slate-500 mt-0.5" id="page-subtitle">LIVE · GLOBAL PIRACY DETECTION &
@@ -123,6 +130,19 @@
         </div>
       </div>
     </header>
+
+    <!-- MOBILE NOTIFICATION BAR (hidden on desktop, replaces floating HUD) -->
+    <div id="mobile-notification-bar">
+      <div class="mob-notif-pulse"></div>
+      <div class="mob-notif-content">
+        <span class="mob-notif-label">MISSION</span>
+        <span id="mob-mission-text" class="mob-notif-text">System Idle: Upload asset to begin protection.</span>
+      </div>
+      <div class="mob-notif-right">
+        <span class="mob-notif-dot"></span>
+        <span class="mob-notif-live">LIVE</span>
+      </div>
+    </div>
 
     <!-- SCROLLABLE CONTENT -->
     <div id="page-dashboard" class="page-view flex-1 overflow-y-auto p-5 space-y-5">
@@ -182,7 +202,7 @@
           <!-- Three rings row -->
           <div class="rings-row flex justify-around items-center py-2">
             <!-- WATCHER -->
-            <div class="ring-wrapper flex flex-col items-center gap-1">
+            <div class="ring-wrapper flex flex-col items-center gap-1" data-agent="watcher">
               <div class="relative w-[72px] h-[72px]">
                 <svg class="ring-svg w-full h-full">
                   <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
@@ -193,13 +213,25 @@
                   <span id="watcher-pct" class="mono text-[10px] font-bold text-white">0%</span>
                 </div>
               </div>
-              <p class="mono text-[9px] font-bold text-white">WATCHER</p>
+              <p class="mono text-[9px] font-bold text-white ring-agent-name">WATCHER</p>
               <span id="watcher-status" class="chip"
                 style="background:rgba(0,255,136,.1);color:var(--c-green);border:1px solid rgba(0,255,136,.25)">IDLE</span>
+              <!-- Mobile card view (hidden on desktop) -->
+              <div class="mob-agent-card" style="--agent-color:var(--c-cyan)">
+                <div class="mob-agent-top">
+                  <i class="fas fa-eye mob-agent-icon"></i>
+                  <div class="mob-agent-info">
+                    <span class="mob-agent-name">WATCHER</span>
+                    <span class="mob-agent-pct" id="mob-watcher-pct">0%</span>
+                  </div>
+                </div>
+                <div class="mob-agent-bar-track"><div class="mob-agent-bar-fill" id="mob-watcher-bar"></div></div>
+                <span id="mob-watcher-status" class="mob-agent-chip">IDLE</span>
+              </div>
             </div>
 
             <!-- INVESTIGATOR -->
-            <div class="ring-wrapper flex flex-col items-center gap-1">
+            <div class="ring-wrapper flex flex-col items-center gap-1" data-agent="investigator">
               <div class="relative w-[72px] h-[72px]">
                 <svg class="ring-svg w-full h-full">
                   <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
@@ -210,13 +242,25 @@
                   <span id="inv-pct" class="mono text-[10px] font-bold text-white">0%</span>
                 </div>
               </div>
-              <p class="mono text-[9px] font-bold text-white">INVESTIGATOR</p>
+              <p class="mono text-[9px] font-bold text-white ring-agent-name">INVESTIGATOR</p>
               <span id="inv-status" class="chip"
                 style="background:rgba(178,75,255,.1);color:#b24bff;border:1px solid rgba(178,75,255,.25)">IDLE</span>
+              <!-- Mobile card view (hidden on desktop) -->
+              <div class="mob-agent-card" style="--agent-color:#b24bff">
+                <div class="mob-agent-top">
+                  <i class="fas fa-magnifying-glass mob-agent-icon"></i>
+                  <div class="mob-agent-info">
+                    <span class="mob-agent-name">INVESTIGATOR</span>
+                    <span class="mob-agent-pct" id="mob-inv-pct">0%</span>
+                  </div>
+                </div>
+                <div class="mob-agent-bar-track"><div class="mob-agent-bar-fill" id="mob-inv-bar"></div></div>
+                <span id="mob-inv-status" class="mob-agent-chip">IDLE</span>
+              </div>
             </div>
 
             <!-- JUDGE -->
-            <div class="ring-wrapper flex flex-col items-center gap-1">
+            <div class="ring-wrapper flex flex-col items-center gap-1" data-agent="judge">
               <div class="relative w-[72px] h-[72px]">
                 <svg class="ring-svg w-full h-full">
                   <circle class="ring-track" cx="36" cy="36" r="34" fill="none" stroke-width="5" />
@@ -227,9 +271,21 @@
                   <span id="judge-pct" class="mono text-[10px] font-bold text-white">0%</span>
                 </div>
               </div>
-              <p class="mono text-[9px] font-bold" style="color:var(--c-red)">JUDGE</p>
+              <p class="mono text-[9px] font-bold ring-agent-name" style="color:var(--c-red)">JUDGE</p>
               <span id="judge-status" class="chip"
                 style="background:rgba(255,45,45,.15);color:var(--c-red);border:1px solid rgba(255,45,45,.3)">IDLE</span>
+              <!-- Mobile card view (hidden on desktop) -->
+              <div class="mob-agent-card" style="--agent-color:var(--c-red)">
+                <div class="mob-agent-top">
+                  <i class="fas fa-gavel mob-agent-icon"></i>
+                  <div class="mob-agent-info">
+                    <span class="mob-agent-name">JUDGE</span>
+                    <span class="mob-agent-pct" id="mob-judge-pct">0%</span>
+                  </div>
+                </div>
+                <div class="mob-agent-bar-track"><div class="mob-agent-bar-fill" id="mob-judge-bar"></div></div>
+                <span id="mob-judge-status" class="mob-agent-chip">IDLE</span>
+              </div>
             </div>
           </div>
 
@@ -974,5 +1030,63 @@
   <div id="toast-container" class="fixed top-5 right-5 z-[300] flex flex-col gap-2 items-end pointer-events-none"></div>
 </body>
 <script src="js/script.js"></script>
+<script>
+  // ── Mobile sidebar toggle ──────────────────────
+  function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('sidebar-open');
+    overlay.classList.toggle('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('sidebar-open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  }
+  // Close sidebar when a nav item is tapped on mobile
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.nav-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        if (window.innerWidth <= 1024) closeSidebar();
+      });
+    });
 
+    // ── Sync Mission HUD text → Mobile Notification Bar ──
+    var missionSrc = document.getElementById('mission-status-text');
+    var missionDst = document.getElementById('mob-mission-text');
+    if (missionSrc && missionDst) {
+      missionDst.textContent = missionSrc.textContent;
+      new MutationObserver(function() {
+        missionDst.textContent = missionSrc.textContent;
+      }).observe(missionSrc, { childList: true, characterData: true, subtree: true });
+    }
+
+    // ── Sync Agent ring % + status → Mobile Agent Cards ──
+    var agents = [
+      { pctSrc: 'watcher-pct',    pctDst: 'mob-watcher-pct',    stSrc: 'watcher-status',    stDst: 'mob-watcher-status',    bar: 'mob-watcher-bar' },
+      { pctSrc: 'inv-pct',        pctDst: 'mob-inv-pct',        stSrc: 'inv-status',        stDst: 'mob-inv-status',        bar: 'mob-inv-bar' },
+      { pctSrc: 'judge-pct',      pctDst: 'mob-judge-pct',      stSrc: 'judge-status',      stDst: 'mob-judge-status',      bar: 'mob-judge-bar' }
+    ];
+    agents.forEach(function(a) {
+      var pSrc = document.getElementById(a.pctSrc);
+      var pDst = document.getElementById(a.pctDst);
+      var sSrc = document.getElementById(a.stSrc);
+      var sDst = document.getElementById(a.stDst);
+      var bar  = document.getElementById(a.bar);
+      function syncAgent() {
+        var pct = pSrc ? pSrc.textContent : '0%';
+        if (pDst) pDst.textContent = pct;
+        if (bar)  bar.style.width = pct;
+        if (sDst && sSrc) {
+          sDst.textContent = sSrc.textContent;
+          sDst.style.color = sSrc.style.color;
+          sDst.style.background = sSrc.style.background;
+          sDst.style.borderColor = sSrc.style.borderColor;
+        }
+      }
+      syncAgent();
+      if (pSrc) new MutationObserver(syncAgent).observe(pSrc, { childList: true, characterData: true, subtree: true });
+      if (sSrc) new MutationObserver(syncAgent).observe(sSrc, { childList: true, characterData: true, subtree: true });
+    });
+  });
+</script>
 </html>
