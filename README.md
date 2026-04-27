@@ -46,7 +46,7 @@ Local Installation
 Clone the Repo:
 
 Bash
-git clone https://github.com/your-username/mediashield-ai.git
+git clone https://github.com/palakgoda/mediashield-ai.git
 cd mediashield-ai
 Launch:
 Open index.html in your browser or run a local server:
