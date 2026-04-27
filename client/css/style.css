@@ -820,3 +820,956 @@ body.simple-mode #ai-engine-panel .rings-row {
     width: 100%;
     border-collapse: collapse;
 }
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — added for responsiveness
+   (no visual changes on desktop)
+═══════════════════════════════════════════ */
+
+/* ── Hamburger button (hidden on desktop) ── */
+.hamburger-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--c-border);
+    background: rgba(0, 220, 255, 0.06);
+    color: var(--c-cyan);
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .18s;
+    margin-right: 10px;
+}
+
+.hamburger-btn:hover {
+    background: rgba(0, 220, 255, 0.14);
+}
+
+/* ── Sidebar overlay (mobile backdrop) ── */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 149;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+}
+
+#sidebar-overlay.open {
+    display: block;
+}
+
+/* ═══════════════════════════════════════════
+   BREAKPOINT ≤ 1024px  (tablets)
+═══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    /* Sidebar becomes an off-canvas drawer */
+    #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 150;
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        box-shadow: 4px 0 40px rgba(0, 0, 0, 0.7);
+    }
+
+    #sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    /* Main area takes full width */
+    body {
+        flex-direction: column;
+    }
+
+    main {
+        width: 100%;
+    }
+
+    /* Show hamburger */
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* hero-row: map full width, AI panel full width */
+    #hero-row {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: unset !important;
+    }
+
+    #hero-row > section {
+        width: 100% !important;
+        min-height: 320px !important;
+    }
+
+    /* grid-cols-4 KPI rows → 2 cols */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Header compact */
+    header .text-right {
+        display: none;
+    }
+
+    header > div:last-child > div:first-child {
+        display: none; /* divider */
+    }
+
+    /* Report two-col table row → stacked */
+    #page-report .grid.grid-cols-2,
+    #page-settings .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Threat map page: stats panel goes below map */
+    #page-map {
+        flex-direction: column !important;
+    }
+
+    #page-map .w-100 {
+        width: 100% !important;
+        border-left: none !important;
+        border-top: 1px solid var(--c-border);
+        max-height: 320px;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   BREAKPOINT ≤ 768px  (phones)
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    /* Mission HUD shorter text */
+    #mission-hud {
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 32px);
+        padding: 8px 14px;
+    }
+
+    #mission-status-text {
+        font-size: 9px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+    /* Header: tighten up */
+    header {
+        padding: 10px 14px !important;
+        gap: 8px;
+    }
+
+    header h1 {
+        font-size: 13px !important;
+    }
+
+    header #page-subtitle {
+        display: none;
+    }
+
+    /* Hide alert counter & divider in header on very small screens */
+    header .flex.items-center.gap-5 {
+        gap: 10px;
+    }
+
+    /* Protect button: icon only on very small screens */
+    #protect-btn span,
+    #protect-btn {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    /* User info: hide text, keep avatar */
+    header .text-right {
+        display: none !important;
+    }
+
+    /* KPI grids → 2 col */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Asset Protection Module: drop → stacked */
+    .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Alert cards: wider on mobile */
+    .alert-card {
+        min-width: 240px;
+        max-width: 80vw;
+    }
+
+    /* Danger zone buttons: stack */
+    #page-settings .flex.gap-4 {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+
+    /* Settings asset protection row */
+    #page-assets .panel.p-4.flex.items-center.gap-3 {
+        flex-wrap: wrap;
+    }
+
+    #page-assets .panel.p-4.flex.items-center.gap-3 > * {
+        min-width: 0;
+    }
+
+    #asset-search {
+        min-width: 0;
+    }
+
+    /* Settings asset filter stacks */
+    #page-assets .flex.items-center.gap-3 {
+        flex-wrap: wrap;
+        gap: 8px !important;
+    }
+
+    /* Intel report trend bars area */
+    #page-report .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Scrollable main content padding */
+    .page-view {
+        padding: 12px !important;
+    }
+
+    /* Modal full width */
+    #modal-box {
+        width: 96% !important;
+        padding: 16px !important;
+    }
+
+    /* Modal comparison: stack */
+    #modal-overlay .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal action buttons stack */
+    #modal-overlay .flex.gap-3 {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+
+    /* Rings row on small screens */
+    .rings-row {
+        gap: 12px;
+        justify-content: center !important;
+    }
+
+    /* Alert feed filter wrap */
+    #af-tab-btns,
+    #af-platform-btns {
+        flex-wrap: wrap;
+    }
+
+    /* Toast container: full-width */
+    #toast-container {
+        right: 8px;
+        left: 8px;
+        top: auto;
+        bottom: 16px;
+        align-items: stretch;
+    }
+
+    .toast {
+        min-width: unset;
+        width: 100%;
+    }
+
+    /* view toggle shrink */
+    .view-toggle {
+        flex-shrink: 0;
+    }
+
+    /* Hide the CPU/MEM system load text overflow */
+    #sidebar #cpu-val,
+    #sidebar #mem-val {
+        font-size: 9px;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   BREAKPOINT ≤ 480px  (small phones)
+═══════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+    /* Header protect btn — icon only */
+    #protect-btn .protect-label {
+        display: none;
+    }
+
+    /* KPIs single column on very small phones */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Smaller panel padding */
+    .panel.p-5 {
+        padding: 12px !important;
+    }
+
+    .panel.p-4 {
+        padding: 10px !important;
+    }
+
+    /* Reduce rings size slightly */
+    .ring-wrapper svg,
+    .ring-wrapper > div {
+        width: 60px !important;
+        height: 60px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   AI ENGINE PANEL — responsive reorganisation
+═══════════════════════════════════════════ */
+
+/* ── Tablet ≤ 1024px ─────────────────────────
+   Panel is now full-width (stacked below map).
+   Reorganise interior into a 2-col grid so the
+   available horizontal space is used properly.
+────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+
+    #ai-engine-panel {
+        /* Switch from flex-col to a 2-col grid internally */
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+
+    /* Title spans full width */
+    #ai-engine-panel > h3 {
+        grid-column: 1 / -1;
+        margin-bottom: 0;
+    }
+
+    /* Left column: rings + verdict */
+    #ai-engine-panel .rings-row {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    #ai-engine-panel #verdict-panel {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    /* Right column: engine details spans rows 2-3 */
+    #ai-engine-panel #engine-details {
+        grid-column: 2;
+        grid-row: 2 / 4;
+        min-height: 200px;
+    }
+
+    /* Rings — spread out now that they have more room */
+    #ai-engine-panel .rings-row {
+        justify-content: space-around !important;
+        padding: 8px 0 !important;
+    }
+
+    /* Reasoning log — give it a defined height in this layout */
+    #ai-engine-panel #reasoning-log {
+        height: 200px;
+        flex: none;
+    }
+
+    /* Scale rings up slightly since panel is wider */
+    #ai-engine-panel .ring-wrapper > .relative {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    #ai-engine-panel .ring-wrapper svg circle {
+        cx: 40;
+        cy: 40;
+        r: 37;
+    }
+}
+
+/* ── Phone ≤ 768px ───────────────────────────
+   Revert to single column — 2-col is too tight.
+   Put rings in a row across full width, then
+   verdict below, then engine details below that.
+────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+    #ai-engine-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px;
+    }
+
+    /* Rings: 3 across full width, evenly spaced */
+    #ai-engine-panel .rings-row {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-evenly !important;
+        align-items: center !important;
+        width: 100%;
+        padding: 4px 0 !important;
+        gap: 0 !important;
+    }
+
+    /* Ring size — comfortable on phone */
+    #ai-engine-panel .ring-wrapper > .relative {
+        width: 72px !important;
+        height: 72px !important;
+    }
+
+    /* Verdict panel — full width row */
+    #ai-engine-panel #verdict-panel {
+        width: 100%;
+    }
+
+    /* Engine details — full width, fixed height log */
+    #ai-engine-panel #engine-details {
+        width: 100%;
+        min-height: unset;
+    }
+
+    #ai-engine-panel #reasoning-log {
+        height: 140px;
+        flex: none;
+    }
+
+    /* Decision engine bar header: wrap if needed */
+    #ai-engine-panel #engine-details .flex.justify-between {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    /* Reasoning engine label: truncate on very narrow */
+    #ai-engine-panel .raj.text-\[10px\] {
+        font-size: 9px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+}
+
+/* ── Small phone ≤ 480px ─────────────────────
+   Rings row still horizontal but tighter rings.
+────────────────────────────────────────────── */
+@media (max-width: 480px) {
+
+    #ai-engine-panel .ring-wrapper > .relative {
+        width: 62px !important;
+        height: 62px !important;
+    }
+
+    #ai-engine-panel .rings-row {
+        padding: 0 !important;
+    }
+
+    #ai-engine-panel #reasoning-log {
+        height: 120px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TARGETED FIXES — HUD blocking, platform split, dropdowns
+═══════════════════════════════════════════════════════ */
+
+/* ── FIX 1: Mission HUD blocks header button on mobile ──
+   Move it below the header so it never overlaps controls. */
+@media (max-width: 1024px) {
+    #mission-hud {
+        top: auto !important;
+        bottom: 20px !important;
+        transform: translateX(-50%) !important;
+        left: 50% !important;
+        max-width: calc(100vw - 32px);
+        /* keep it above toasts */
+        z-index: 99;
+    }
+
+    /* Toast container: shift up so it clears the HUD */
+    #toast-container {
+        bottom: 80px !important;
+        top: auto !important;
+        right: 12px;
+        left: 12px;
+        align-items: flex-end;
+    }
+}
+
+/* ── FIX 2: Intel Report — grid-cols-12 col-span-8/4 ───
+   Stack chart + platform-split on tablet and below.     */
+@media (max-width: 1024px) {
+    #page-report .grid.grid-cols-12 {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px;
+    }
+
+    #page-report .grid.grid-cols-12 > .col-span-8,
+    #page-report .grid.grid-cols-12 > .col-span-4 {
+        width: 100% !important;
+    }
+
+    /* Platform split bars fill full width */
+    #report-platform-split .flex.items-center {
+        flex-wrap: nowrap;
+    }
+}
+
+/* ── FIX 3: Asset Registry filter bar — dropdowns ──────
+   Wrap into two rows: search full-width on top,
+   selects + button on the row below.                   */
+@media (max-width: 1024px) {
+    #page-assets .panel.p-4.flex.items-center.gap-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* Search bar — full width on its own row */
+    #page-assets .panel.p-4.flex .flex-1.relative {
+        flex: 1 1 100% !important;
+        min-width: 0;
+    }
+
+    /* Selects — grow equally, never overflow */
+    #asset-type-filter,
+    #asset-status-filter {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        /* ensure the dropdown options are visible */
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+    }
+
+    /* Register button — stretches to fill remaining space */
+    #page-assets .panel.p-4.flex button[onclick="openRegisterModal()"] {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 640px) {
+    /* On small phones: stack selects + button vertically */
+    #asset-type-filter,
+    #asset-status-filter {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+
+    #page-assets .panel.p-4.flex button[onclick="openRegisterModal()"] {
+        width: 100% !important;
+        justify-content: center;
+    }
+
+    /* Dropdown option text visible (dark bg fix) */
+    #asset-type-filter option,
+    #asset-status-filter option {
+        background: #0a0e18;
+        color: #b0bec5;
+    }
+}
+
+/* ── FIX 4: AI Engine Panel — improved mobile layout ───
+   On mobile full-width: rings row stays horizontal across
+   the full width; verdict + engine details stack below.  */
+@media (max-width: 768px) {
+
+    /* Ensure ring SVGs don't shrink or clip */
+    #ai-engine-panel .ring-wrapper {
+        flex-shrink: 0;
+        min-width: 68px;
+    }
+
+    /* Rings container: spread evenly, allow wrap if tiny screen */
+    #ai-engine-panel .rings-row {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-evenly !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        width: 100%;
+        padding: 8px 0 !important;
+        gap: 0 !important;
+        background: rgba(0,0,0,.15);
+        border-radius: 10px;
+    }
+
+    /* Verdict panel: readable at full width */
+    #verdict-panel {
+        border-radius: 8px;
+        padding: 10px 12px;
+    }
+
+    /* Engine details: scroll if content is tall */
+    #engine-details {
+        overflow: hidden;
+    }
+
+    /* Reasoning log: constrained height with scroll */
+    #reasoning-log {
+        height: 130px !important;
+        overflow-y: auto;
+    }
+
+    /* Decision engine bar header chips: don't overflow */
+    #engine-details .chip {
+        font-size: 8px;
+        padding: 1px 5px;
+        white-space: nowrap;
+    }
+
+    /* Gemini engine label: clip gracefully */
+    #engine-details .raj {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100% - 60px);
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small phones: slightly tighter rings */
+    #ai-engine-panel .ring-wrapper > .relative {
+        width: 58px !important;
+        height: 58px !important;
+    }
+
+    #ai-engine-panel .ring-wrapper {
+        min-width: 58px;
+    }
+
+    /* Chip below each ring: smaller */
+    #ai-engine-panel .chip {
+        font-size: 7px;
+        padding: 1px 4px;
+    }
+}
+
+/* ── Dropdown option legibility on all mobile browsers ─ */
+@media (max-width: 1024px) {
+    select option {
+        background-color: #0a0e18 !important;
+        color: #b0bec5 !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   V3 — MOBILE NOTIFICATION BAR + AI ENGINE CARD REDESIGN
+═══════════════════════════════════════════════════════════ */
+
+/* ── Desktop: hide the mobile bar, keep the floating HUD ── */
+#mobile-notification-bar { display: none; }
+
+/* ── Mobile agent cards: hidden on desktop ─────────────── */
+.mob-agent-card { display: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   ≤ 1024px  (tablets + phones)
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+
+  /* ── 1. Hide the floating pill HUD on mobile ── */
+  #mission-hud {
+    display: none !important;
+  }
+
+  /* ── 2. Show the inline notification bar ── */
+  #mobile-notification-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--c-border);
+    background: linear-gradient(90deg, rgba(0,14,28,.98) 0%, rgba(0,30,50,.92) 100%);
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    /* subtle scan-line shimmer */
+    background-size: 200% 100%;
+  }
+
+  #mobile-notification-bar::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--c-cyan), #0050a0);
+    box-shadow: 0 0 8px var(--c-cyan);
+  }
+
+  .mob-notif-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-cyan);
+    box-shadow: 0 0 6px var(--c-cyan);
+    animation: pls 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+    margin-left: 6px;
+  }
+
+  .mob-notif-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .mob-notif-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    letter-spacing: .18em;
+    color: var(--c-cyan);
+    text-transform: uppercase;
+    opacity: .7;
+    line-height: 1;
+  }
+
+  .mob-notif-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: #fff;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mob-notif-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .mob-notif-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--c-red);
+    box-shadow: 0 0 5px var(--c-red);
+    animation: pls 1s ease-in-out infinite;
+  }
+
+  .mob-notif-live {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--c-red);
+    text-transform: uppercase;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ≤ 768px  — AI Engine Panel: full card redesign
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Reset any previous AI panel overrides */
+  #ai-engine-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px;
+    padding: 14px !important;
+  }
+
+  /* ── Hide the ring SVG visuals on mobile ── */
+  #ai-engine-panel .ring-wrapper > .relative {
+    display: none !important;
+  }
+
+  /* ── Hide the old name + chip below rings ── */
+  #ai-engine-panel .ring-agent-name,
+  #ai-engine-panel .ring-wrapper > .chip {
+    display: none !important;
+  }
+
+  /* ── The rings-row becomes a 3-col card grid ── */
+  #ai-engine-panel .rings-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    background: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* ── Each ring-wrapper becomes a card ── */
+  #ai-engine-panel .ring-wrapper {
+    display: block !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* ── Show the mobile agent cards ── */
+  .mob-agent-card {
+    display: flex !important;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.07);
+    background: rgba(0,0,0,.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mob-agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--agent-color, var(--c-cyan));
+    box-shadow: 0 0 8px var(--agent-color, var(--c-cyan));
+    opacity: .8;
+  }
+
+  .mob-agent-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .mob-agent-icon {
+    font-size: 13px;
+    color: var(--agent-color, var(--c-cyan));
+    opacity: .85;
+    flex-shrink: 0;
+  }
+
+  .mob-agent-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .mob-agent-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: #8a9ab0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mob-agent-pct {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--agent-color, var(--c-cyan));
+    line-height: 1;
+  }
+
+  /* Horizontal progress bar */
+  .mob-agent-bar-track {
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.07);
+    overflow: hidden;
+  }
+
+  .mob-agent-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    background: var(--agent-color, var(--c-cyan));
+    box-shadow: 0 0 6px var(--agent-color, var(--c-cyan));
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+  }
+
+  .mob-agent-chip {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    align-self: flex-start;
+    /* colors synced via JS from original chips */
+  }
+
+  /* ── Verdict panel: compact horizontal layout ── */
+  #verdict-panel {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(10,4,22,.7);
+    border: 1px solid rgba(178,75,255,.25);
+  }
+
+  #verdict-panel .flex.items-center.justify-between:first-child {
+    grid-column: 1 / -1;
+  }
+
+  #verdict-panel #verdict-text {
+    grid-column: 1;
+    font-size: 10px;
+  }
+
+  #verdict-panel .flex.items-center.justify-between.mt-2 {
+    grid-column: 1 / -1;
+    margin-top: 4px !important;
+  }
+
+  /* ── Engine details: compact ── */
+  #engine-details {
+    gap: 10px !important;
+  }
+
+  #reasoning-log {
+    height: 120px !important;
+  }
+
+  /* Decision engine header row */
+  #ai-engine-panel #engine-details > div:first-child .flex.justify-between {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ≤ 480px  — Very small phones
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  .mob-agent-pct {
+    font-size: 15px;
+  }
+
+  .mob-agent-card {
+    padding: 8px;
+    gap: 5px;
+  }
+
+  #reasoning-log {
+    height: 100px !important;
+  }
+
+  /* Notification bar text even tighter */
+  .mob-notif-text {
+    font-size: 10px;
+  }
+}
