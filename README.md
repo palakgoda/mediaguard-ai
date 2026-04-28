@@ -1,67 +1,77 @@
-🛡️ MediaGuard AI: Forensic Sports Workstation
-Bridging the Visibility Gap in Digital Sports Media
+🛡️ MediaGuard AI: Autonomous Forensic Workstation
+National Finalist Submission | Build with AI Solution Challenge
 
 📌 1. What is MediaGuard AI?
-MediaGuard AI is a sophisticated forensic workstation designed for sports leagues and broadcasters to protect high-value digital assets. It utilizes an Agentic AI Architecture to move beyond simple hashing, providing deep-content analysis and real-time piracy monitoring.
+MediaGuard AI is a sophisticated forensic workstation designed for sports leagues and broadcasters to protect high-value digital assets. It utilizes an Agentic AI Architecture to move beyond brittle hashing, providing deep-content analysis and autonomous piracy defense.
 
 The Problem
-Traditional piracy protection is reactive. By the time a leak is reported, the broadcast value has already plummeted.
+Traditional piracy protection is reactive. By the time a leak is reported, the broadcast value has already plummeted. Standard hashing fails if a pirate simply crops or filters the video.
 
 The Solution
-A proactive, AI-driven registry that:
+A proactive, AI-driven ecosystem that:
 
-Ingests assets and creates a "Digital DNA" (Steganographic Fingerprint).
+Ingests & Notarizes: Creates a "Digital DNA" fingerprint for every asset.
 
-Monitors global networks using agentic reasoning.
+Monitors: Scans global networks using multi-agent multimodal reasoning.
 
-Enforces rights through automated forensic logging.
+Enforces: Triggers automated forensic logging and rapid response.
 
 🛠️ 2. How it Works (The Tech Stack)
-We built a multi-layered system designed for scale and security.
+We built an enterprise-grade system designed for scale, security, and precision.
 
-Frontend: Responsive dashboard built with HTML5, CSS3 (Tailwind), and Vanilla JS.
+Frontend: Responsive Mission HUD built with HTML5, Tailwind CSS, and Vanilla JS.
 
-AI Engine: Gemini 1.5 Flash (via Google AI Studio) for multimodal content reasoning.
+AI Engine: Gemini 1.5 Flash & Pro for high-speed multimodal reasoning and "Judge" logic.
 
-Infrastructure: Deployed on Google Cloud Run (Serverless Containers).
+Infrastructure: Serverless orchestration deployed on Google Cloud Run.
 
-State Management: LocalStorage persistence for demo stability and history.
+Security: Integrated Application Default Credentials (ADC) for secure, keyless service-to-service communication.
 
-🤖 3. The Agentic Orchestration (Powered by Gemini)
-We moved away from hardcoded logic to a Three-Agent System that utilizes Gemini 1.5 Flash for decision-making:
+Persistence: Firebase Firestore real-time NoSQL vault for forensic audit logs and asset registry.
 
-The Watcher Agent: Performs the initial forensic scan, identifying jerseys, logos, and proprietary markers.
+🤖 3. The Agentic Orchestration (A2A Protocol)
+We moved away from hardcoded logic to a Hierarchical Three-Agent System that utilizes the Agent-to-Agent (A2A) protocol for decision-making:
 
-The Investigator Agent: Heuristic pattern matching across global streams, identifying "Speed-shifting" or "Mirroring" bypasses.
+The Watcher Agent: Performs initial forensic ingestion, identifying jerseys, logos, and proprietary broadcast markers.
 
-The Judge Agent: Generates natural language reasoning logs explaining why a specific alert was triggered (Critical vs. Review).
+The Investigator Agent: Executes heuristic pattern matching across global streams, identifying "Speed-shifting," "Mirroring," or "Cropping" bypasses.
+
+The Judge Agent: Powered by Gemini 1.5 Pro, this agent generates natural language reasoning logs explaining the "Intent" of the content (Piracy vs. Fan Tribute).
+
+Note on SynthID: The architecture is designed for Google SynthID integration to provide pixel-level steganographic watermarking. The current version utilizes a forensic simulation layer to demonstrate provenance tracking pending full production API access.
 
 📜 4. Step-by-Step Setup (For Reviewers)
 Prerequisites
 A modern web browser.
 
-(Optional) Google Cloud SDK if deploying to Cloud Run.
+Google Cloud SDK (if deploying/managing via CLI).
 
 Local Installation
 Clone the Repo:
-
-Bash
 git clone https://github.com/palakgoda/mediashield-ai.git
 cd mediashield-ai
+
 Launch:
 Open index.html in your browser or run a local server:
-
-Bash
 npx serve .
+
 Deployment to Google Cloud Run
-Bash
-gcloud run deploy mediashield-app --source . --project mediashield-ai-494009 --region us-central1 --allow-unauthenticated
+gcloud run deploy mediashield-app --source . --project mediashield-ai-454009 --region us-central1 --allow-unauthenticated
 
 📊 5. Key Features
 Mission HUD: A real-time navigation system guiding users through the forensic lifecycle.
 
-Global Threat Map: Geospatial visualization of unauthorized stream sources.
+Geospatial Threat Map: Live visualization of unauthorized stream sources via Google Maps API.
 
-Forensic Registry: A persistent table of all "Master Assets" protected by the system.
+Forensic Registry: A persistent Firestore table of all "Master Assets" protected by the system.
 
-Automated Takedowns: High-fidelity alerting system with 94%+ match accuracy.
+Neural Intent Recognition: Using Gemini's long-context window to differentiate between copyright theft and fair-use fan engagement.
+
+Automated Takedown Logic: Cloud Run-triggered alerts with 94%+ match accuracy.
+
+🚀 6. Future Roadmap
+Blockchain Notarization: Implementing immutable certificates of ownership for every digital asset.
+
+Deepfake Detection: Enhancing the Investigator Agent to detect AI-generated sports highlights.
+
+Direct Social API Integration: Automated DMCA strikes via YouTube and Meta webhooks.
